@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 const categories = ['all', 'academic', 'social', 'sports', 'cultural', 'workshop', 'seminar'];
 
 export default function EventsPage() {
-  const { user } = useAuth();
+  const { role } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -36,7 +36,7 @@ export default function EventsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-3xl font-bold"
             >
-              {user?.role === 'student' ? 'Browse Events' : 'Events'}
+              {role === 'student' ? 'Browse Events' : 'Events'}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: -10 }}
@@ -48,7 +48,7 @@ export default function EventsPage() {
             </motion.p>
           </div>
 
-          {user?.role === 'organizer' && (
+          {role === 'organizer' && (
             <Link to="/events/create">
               <Button className="gradient-primary text-white">
                 <Plus className="w-4 h-4 mr-2" />

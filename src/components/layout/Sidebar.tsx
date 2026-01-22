@@ -6,7 +6,6 @@ import {
   Calendar, 
   Users, 
   BarChart3, 
-  Settings, 
   Bell, 
   QrCode,
   Plus,
@@ -48,12 +47,14 @@ const sidebarLinks = {
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout } = useAuth();
+  const { profile, role, signOut } = useAuth();
   const location = useLocation();
 
-  if (!user) return null;
+  if (!profile || !role) return null;
 
-  const links = sidebarLinks[user.role];
+  const links = sidebarLinks[role];
+  const displayName = profile.name || profile.email.split('@')[0];
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
     <motion.aside
@@ -134,7 +135,7 @@ export function Sidebar() {
         )}>
           <Avatar className="w-10 h-10 flex-shrink-0">
             <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
-              {user.name.split(' ').map(n => n[0]).join('')}
+              {initials}
             </AvatarFallback>
           </Avatar>
           <AnimatePresence>
@@ -145,15 +146,15 @@ export function Sidebar() {
                 exit={{ opacity: 0 }}
                 className="flex-1 overflow-hidden"
               >
-                <p className="font-medium text-sidebar-foreground text-sm truncate">{user.name}</p>
-                <p className="text-xs text-sidebar-foreground/60 capitalize">{user.role}</p>
+                <p className="font-medium text-sidebar-foreground text-sm truncate">{displayName}</p>
+                <p className="text-xs text-sidebar-foreground/60 capitalize">{role}</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
         <Button
           variant="ghost"
-          onClick={logout}
+          onClick={signOut}
           className={cn(
             "w-full mt-2 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
             collapsed && "px-0"
