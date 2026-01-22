@@ -19,7 +19,7 @@ import { mockEvents, mockAnalytics } from '@/lib/mockData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { profile, role } = useAuth();
   const upcomingEvents = mockEvents.filter(e => e.status === 'approved').slice(0, 3);
   const pendingEvents = mockEvents.filter(e => e.status === 'pending');
 
@@ -49,7 +49,7 @@ export default function DashboardPage() {
             transition={{ delay: 0.1 }}
             className="text-3xl font-bold"
           >
-            Welcome back, {user?.name.split(' ')[0]}!
+            Welcome back, {profile?.name?.split(' ')[0] || 'User'}!
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: -10 }}
@@ -154,7 +154,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions & Pending */}
-        {user?.role === 'admin' && pendingEvents.length > 0 && (
+        {role === 'admin' && pendingEvents.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

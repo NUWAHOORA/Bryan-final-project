@@ -1,53 +1,67 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { GraduationCap, Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { UserRole } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, switchRole } = useAuth();
+  const { signIn, signUp, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    const success = await login(email, password);
-    
-    if (success) {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
-      navigate('/dashboard');
-    } else {
-      toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
-    }
-    
-    setIsLoading(false);
-  };
 
-  const quickLogin = (role: UserRole) => {
-    switchRole(role);
-    toast({
-      title: "Welcome!",
-      description: `Logged in as ${role}.`,
-    });
-    navigate('/dashboard');
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error(error.message || 'Failed to sign in');
+        } else {
+          toast.success('Welcome back!');
+          navigate('/dashboard');
+        }
+      } else {
+        if (!name.trim()) {
+          toast.error('Please enter your name');
+          setIsLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          toast.error('Password must be at least 6 characters');
+          setIsLoading(false);
+          return;
+        }
+        const { error } = await signUp(email, password, name);
+        if (error) {
+          toast.error(error.message || 'Failed to sign up');
+        } else {
+          toast.success('Account created successfully!');
+          navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -106,7 +120,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Panel - Login Form */}
+      {/* Right Panel - Auth Form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -125,11 +139,35 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-2">Welcome back</h2>
-            <p className="text-muted-foreground">Sign in to your account to continue</p>
+            <h2 className="text-3xl font-bold mb-2">
+              {isLogin ? 'Welcome back' : 'Create account'}
+            </h2>
+            <p className="text-muted-foreground">
+              {isLogin 
+                ? 'Sign in to your account to continue'
+                : 'Sign up to get started with UniEvents'}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-10 h-12"
+                    required={!isLogin}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <div className="relative">
@@ -141,17 +179,13 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 h-12"
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -161,6 +195,8 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 h-12"
+                  required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -177,45 +213,26 @@ export default function LoginPage() {
               className="w-full h-12 gradient-primary text-white font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
-              <ArrowRight className="w-4 h-4 ml-2" />
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  {isLogin ? 'Sign in' : 'Create Account'}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              )}
             </Button>
           </form>
 
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Quick demo access</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-3">
-              {[
-                { role: 'admin' as UserRole, label: 'Admin', color: 'bg-primary/10 hover:bg-primary/20 text-primary' },
-                { role: 'organizer' as UserRole, label: 'Organizer', color: 'bg-success/10 hover:bg-success/20 text-success' },
-                { role: 'student' as UserRole, label: 'Student', color: 'bg-accent/10 hover:bg-accent/20 text-accent' },
-              ].map((item) => (
-                <Button
-                  key={item.role}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => quickLogin(item.role)}
-                  className={`h-11 font-medium ${item.color}`}
-                >
-                  {item.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
           <p className="text-center text-sm text-muted-foreground mt-8">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary font-medium hover:underline">
-              Create account
-            </Link>
+            {isLogin ? "Don't have an account?" : 'Already have an account?'}
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="ml-2 text-primary font-medium hover:underline"
+            >
+              {isLogin ? 'Sign Up' : 'Sign In'}
+            </button>
           </p>
         </motion.div>
       </div>
