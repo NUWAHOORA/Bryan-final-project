@@ -1,29 +1,30 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus, Grid, List } from 'lucide-react';
+import { Search, Plus, Grid, List, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockEvents } from '@/lib/mockData';
+import { useEvents } from '@/hooks/useEvents';
 import { Link } from 'react-router-dom';
 
 const categories = ['all', 'academic', 'social', 'sports', 'cultural', 'workshop', 'seminar'];
 
 export default function EventsPage() {
   const { role } = useAuth();
+  const { data: events, isLoading } = useEvents();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const filteredEvents = mockEvents.filter(event => {
+  const filteredEvents = events?.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory;
     return matchesSearch && matchesCategory;
-  });
+  }) || [];
 
   return (
     <MainLayout>
@@ -48,7 +49,7 @@ export default function EventsPage() {
             </motion.p>
           </div>
 
-          {role === 'organizer' && (
+          {(role === 'organizer' || role === 'admin') && (
             <Link to="/events/create">
               <Button className="gradient-primary text-white">
                 <Plus className="w-4 h-4 mr-2" />
@@ -110,17 +111,48 @@ export default function EventsPage() {
           </div>
         </motion.div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
+
         {/* Events Grid */}
-        {filteredEvents.length > 0 ? (
+        {!isLoading && filteredEvents.length > 0 && (
           <div className={viewMode === 'grid' 
             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
             : 'flex flex-col gap-4'
           }>
             {filteredEvents.map((event, index) => (
-              <EventCard key={event.id} event={event} index={index} />
+              <EventCard 
+                key={event.id} 
+                event={{
+                  id: event.id,
+                  title: event.title,
+                  description: event.description || '',
+                  date: event.date,
+                  time: event.time,
+                  venue: event.venue,
+                  category: event.category,
+                  capacity: event.capacity,
+                  registeredCount: event.registered_count,
+                  attendedCount: event.attended_count,
+                  status: event.status,
+                  organizerId: event.organizer_id,
+                  organizerName: event.organizer_name || 'Unknown',
+                  imageUrl: event.image_url || undefined,
+                  qrCode: event.qr_code || undefined,
+                  createdAt: event.created_at
+                }} 
+                index={index} 
+              />
             ))}
           </div>
-        ) : (
+        )}
+
+        {/* Empty State */}
+        {!isLoading && filteredEvents.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
