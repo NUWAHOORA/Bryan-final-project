@@ -9,8 +9,8 @@ import {
   Users, 
   FileText,
   Tags,
-  Image,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -24,8 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from '@/hooks/use-toast';
-import { EventCategory } from '@/types';
+import { useCreateEvent } from '@/hooks/useEvents';
+
+type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
 
 const categories: { value: EventCategory; label: string }[] = [
   { value: 'academic', label: 'Academic' },
@@ -38,8 +39,7 @@ const categories: { value: EventCategory; label: string }[] = [
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createEventMutation = useCreateEvent();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -52,17 +52,17 @@ export default function CreateEventPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    toast({
-      title: "Event submitted for approval",
-      description: "Your event has been submitted and is pending admin approval.",
+    
+    await createEventMutation.mutateAsync({
+      title: formData.title,
+      description: formData.description,
+      date: formData.date,
+      time: formData.time,
+      venue: formData.venue,
+      category: formData.category,
+      capacity: parseInt(formData.capacity),
     });
 
-    setIsSubmitting(false);
     navigate('/events');
   };
 
@@ -235,10 +235,13 @@ export default function CreateEventPage() {
             <Button 
               type="submit" 
               className="gradient-primary text-white min-w-32"
-              disabled={isSubmitting}
+              disabled={createEventMutation.isPending}
             >
-              {isSubmitting ? (
-                'Submitting...'
+              {createEventMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
               ) : (
                 <>
                   <Check className="w-4 h-4 mr-2" />

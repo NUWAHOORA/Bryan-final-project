@@ -12,7 +12,8 @@ import {
   CheckCircle,
   LogOut,
   ChevronLeft,
-  GraduationCap
+  GraduationCap,
+  Package
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,7 @@ const sidebarLinks = {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'All Events', path: '/events' },
     { icon: CheckCircle, label: 'Approvals', path: '/approvals' },
+    { icon: Package, label: 'Resources', path: '/resources' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },

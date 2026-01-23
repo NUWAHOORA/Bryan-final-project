@@ -5,9 +5,9 @@ import {
   TrendingUp, 
   Clock,
   CheckCircle,
-  AlertCircle,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -15,19 +15,46 @@ import { StatCard } from '@/components/ui/stat-card';
 import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockEvents, mockAnalytics } from '@/lib/mockData';
+import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function DashboardPage() {
   const { profile, role } = useAuth();
-  const upcomingEvents = mockEvents.filter(e => e.status === 'approved').slice(0, 3);
-  const pendingEvents = mockEvents.filter(e => e.status === 'pending');
+  const { data: events, isLoading } = useEvents();
+  const updateStatusMutation = useUpdateEventStatus();
+  
+  const approvedEvents = events?.filter(e => e.status === 'approved') || [];
+  const pendingEvents = events?.filter(e => e.status === 'pending') || [];
+  const upcomingEvents = approvedEvents.slice(0, 3);
+
+  // Calculate analytics from real data
+  const totalEvents = events?.length || 0;
+  const totalRegistrations = events?.reduce((sum, e) => sum + e.registered_count, 0) || 0;
+  const totalAttendance = events?.reduce((sum, e) => sum + e.attended_count, 0) || 0;
+  const attendanceRate = totalRegistrations > 0 ? ((totalAttendance / totalRegistrations) * 100).toFixed(1) : '0';
+
+  // Mock monthly trends for chart (would come from real data in production)
+  const monthlyTrends = [
+    { month: 'Sep', events: 8, registrations: 1200 },
+    { month: 'Oct', events: 12, registrations: 1800 },
+    { month: 'Nov', events: 10, registrations: 1500 },
+    { month: 'Dec', events: 6, registrations: 900 },
+    { month: 'Jan', events: totalEvents, registrations: totalRegistrations },
+  ];
 
   const greeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
+  };
+
+  const handleApprove = async (eventId: string) => {
+    await updateStatusMutation.mutateAsync({ id: eventId, status: 'approved' });
+  };
+
+  const handleReject = async (eventId: string) => {
+    await updateStatusMutation.mutateAsync({ id: eventId, status: 'rejected' });
   };
 
   return (
@@ -65,25 +92,22 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Events"
-            value={mockAnalytics.totalEvents}
+            value={totalEvents}
             icon={Calendar}
-            trend={{ value: 12, positive: true }}
             variant="primary"
             delay={0}
           />
           <StatCard
             title="Total Registrations"
-            value={mockAnalytics.totalRegistrations.toLocaleString()}
+            value={totalRegistrations.toLocaleString()}
             icon={Users}
-            trend={{ value: 8, positive: true }}
             variant="success"
             delay={0.1}
           />
           <StatCard
             title="Attendance Rate"
-            value={`${mockAnalytics.attendanceRate}%`}
+            value={`${attendanceRate}%`}
             icon={TrendingUp}
-            trend={{ value: 3, positive: true }}
             variant="accent"
             delay={0.2}
           />
@@ -106,7 +130,7 @@ export default function DashboardPage() {
           >
             <h3 className="text-lg font-semibold mb-4">Monthly Registrations</h3>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={mockAnalytics.monthlyTrends}>
+              <BarChart data={monthlyTrends}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -130,7 +154,7 @@ export default function DashboardPage() {
           >
             <h3 className="text-lg font-semibold mb-4">Events Overview</h3>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={mockAnalytics.monthlyTrends}>
+              <LineChart data={monthlyTrends}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -163,7 +187,7 @@ export default function DashboardPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-warning" />
+                <Clock className="w-5 h-5 text-warning" />
                 <h2 className="text-xl font-semibold">Pending Approvals</h2>
               </div>
               <Link to="/approvals">
@@ -173,17 +197,28 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {pendingEvents.map((event, index) => (
+              {pendingEvents.slice(0, 4).map((event) => (
                 <div key={event.id} className="bg-warning/5 border border-warning/20 rounded-xl p-4 flex items-center justify-between">
                   <div>
                     <h3 className="font-medium">{event.title}</h3>
-                    <p className="text-sm text-muted-foreground">{event.organizerName}</p>
+                    <p className="text-sm text-muted-foreground">{event.organizer_name}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="border-destructive text-destructive hover:bg-destructive/10"
+                      onClick={() => handleReject(event.id)}
+                      disabled={updateStatusMutation.isPending}
+                    >
                       Reject
                     </Button>
-                    <Button size="sm" className="gradient-success text-white">
+                    <Button 
+                      size="sm" 
+                      className="gradient-success text-white"
+                      onClick={() => handleApprove(event.id)}
+                      disabled={updateStatusMutation.isPending}
+                    >
                       <CheckCircle className="w-4 h-4 mr-1" /> Approve
                     </Button>
                   </div>
@@ -207,11 +242,42 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingEvents.map((event, index) => (
-              <EventCard key={event.id} event={event} index={index} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          ) : upcomingEvents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingEvents.map((event, index) => (
+                <EventCard 
+                  key={event.id} 
+                  event={{
+                    id: event.id,
+                    title: event.title,
+                    description: event.description || '',
+                    date: event.date,
+                    time: event.time,
+                    venue: event.venue,
+                    category: event.category,
+                    capacity: event.capacity,
+                    registeredCount: event.registered_count,
+                    attendedCount: event.attended_count,
+                    status: event.status,
+                    organizerId: event.organizer_id,
+                    organizerName: event.organizer_name || 'Unknown',
+                    imageUrl: event.image_url || undefined,
+                    qrCode: event.qr_code || undefined,
+                    createdAt: event.created_at
+                  }} 
+                  index={index} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No upcoming events yet
+            </div>
+          )}
         </motion.div>
       </div>
     </MainLayout>

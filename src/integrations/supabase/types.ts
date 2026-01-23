@@ -14,6 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_resources: {
+        Row: {
+          allocated_at: string
+          allocated_by: string
+          event_id: string
+          id: string
+          notes: string | null
+          quantity: number
+          resource_type_id: string
+        }
+        Insert: {
+          allocated_at?: string
+          allocated_by: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          resource_type_id: string
+        }
+        Update: {
+          allocated_at?: string
+          allocated_by?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          resource_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_resources_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_resources_resource_type_id_fkey"
+            columns: ["resource_type_id"]
+            isOneToOne: false
+            referencedRelation: "resource_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          attended_count: number
+          capacity: number
+          category: Database["public"]["Enums"]["event_category"]
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          image_url: string | null
+          organizer_id: string
+          qr_code: string | null
+          registered_count: number
+          status: Database["public"]["Enums"]["event_status"]
+          time: string
+          title: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          attended_count?: number
+          capacity?: number
+          category?: Database["public"]["Enums"]["event_category"]
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          organizer_id: string
+          qr_code?: string | null
+          registered_count?: number
+          status?: Database["public"]["Enums"]["event_status"]
+          time: string
+          title: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          attended_count?: number
+          capacity?: number
+          category?: Database["public"]["Enums"]["event_category"]
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          organizer_id?: string
+          qr_code?: string | null
+          registered_count?: number
+          status?: Database["public"]["Enums"]["event_status"]
+          time?: string
+          title?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -44,6 +146,33 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      resource_types: {
+        Row: {
+          available_quantity: number
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          total_quantity: number
+        }
+        Insert: {
+          available_quantity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          total_quantity?: number
+        }
+        Update: {
+          available_quantity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          total_quantity?: number
         }
         Relationships: []
       }
@@ -84,6 +213,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "organizer" | "student"
+      event_category:
+        | "academic"
+        | "social"
+        | "sports"
+        | "cultural"
+        | "workshop"
+        | "seminar"
+      event_status: "pending" | "approved" | "rejected" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -212,6 +349,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "organizer", "student"],
+      event_category: [
+        "academic",
+        "social",
+        "sports",
+        "cultural",
+        "workshop",
+        "seminar",
+      ],
+      event_status: ["pending", "approved", "rejected", "cancelled"],
     },
   },
 } as const
