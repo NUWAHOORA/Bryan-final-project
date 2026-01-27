@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_resource_requests: {
+        Row: {
+          event_id: string
+          id: string
+          notes: string | null
+          requested_at: string
+          requested_by: string
+          requested_quantity: number
+          resource_type_id: string
+          status: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          notes?: string | null
+          requested_at?: string
+          requested_by: string
+          requested_quantity?: number
+          resource_type_id: string
+          status?: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          notes?: string | null
+          requested_at?: string
+          requested_by?: string
+          requested_quantity?: number
+          resource_type_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_resource_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_resource_requests_resource_type_id_fkey"
+            columns: ["resource_type_id"]
+            isOneToOne: false
+            referencedRelation: "resource_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_resources: {
         Row: {
           allocated_at: string

@@ -12,13 +12,15 @@ import {
   Heart,
   CheckCircle,
   User,
-  Ticket
+  Ticket,
+  Edit,
+  Loader2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockEvents } from '@/lib/mockData';
+import { useEvent } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
@@ -27,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { EditEventDialog } from '@/components/events/EditEventDialog';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -39,13 +42,23 @@ const categoryColors: Record<string, string> = {
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { data: event, isLoading } = useEvent(id || '');
   const [isRegistered, setIsRegistered] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  const event = mockEvents.find(e => e.id === id);
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="p-8 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   if (!event) {
     return (
@@ -60,8 +73,10 @@ export default function EventDetailPage() {
     );
   }
 
-  const spotsLeft = event.capacity - event.registeredCount;
+  const spotsLeft = event.capacity - event.registered_count;
   const isAlmostFull = spotsLeft < event.capacity * 0.1;
+  const isOwner = user?.id === event.organizer_id;
+  const canEdit = isOwner || role === 'admin';
 
   const handleRegister = () => {
     setIsRegistered(true);
@@ -104,13 +119,21 @@ export default function EventDetailPage() {
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
               <div className="h-2 gradient-primary" />
               <div className="p-8">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge className={cn("font-medium capitalize", categoryColors[event.category])}>
-                    {event.category}
-                  </Badge>
-                  <Badge variant="outline" className="capitalize font-medium">
-                    {event.status}
-                  </Badge>
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className={cn("font-medium capitalize", categoryColors[event.category])}>
+                      {event.category}
+                    </Badge>
+                    <Badge variant="outline" className="capitalize font-medium">
+                      {event.status}
+                    </Badge>
+                  </div>
+                  {canEdit && (
+                    <Button variant="outline" size="sm" onClick={() => setShowEditModal(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Event
+                    </Button>
+                  )}
                 </div>
 
                 <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
@@ -118,7 +141,7 @@ export default function EventDetailPage() {
                 <div className="flex items-center gap-4 mb-6 text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4" />
-                    <span>{event.organizerName}</span>
+                    <span>{event.organizer_name}</span>
                   </div>
                 </div>
 
@@ -187,7 +210,7 @@ export default function EventDetailPage() {
                   "font-semibold",
                   isAlmostFull ? "text-warning" : ""
                 )}>
-                  {event.registeredCount}/{event.capacity}
+                  {event.registered_count}/{event.capacity}
                 </span>
               </div>
 
@@ -197,15 +220,15 @@ export default function EventDetailPage() {
                     "h-2 rounded-full transition-all",
                     isAlmostFull ? "bg-warning" : "bg-primary"
                   )}
-                  style={{ width: `${(event.registeredCount / event.capacity) * 100}%` }}
+                  style={{ width: `${(event.registered_count / event.capacity) * 100}%` }}
                 />
               </div>
 
-              {spotsLeft <= 20 && (
+              {spotsLeft <= 20 && spotsLeft > 0 && (
                 <p className="text-sm text-warning mb-4">Only {spotsLeft} spots left!</p>
               )}
 
-              {user?.role === 'student' && (
+              {role === 'student' && event.status === 'approved' && (
                 <>
                   {isRegistered ? (
                     <div className="space-y-3">
@@ -237,12 +260,10 @@ export default function EventDetailPage() {
                 </>
               )}
 
-              {(user?.role === 'admin' || user?.role === 'organizer') && (
-                <Link to={`/events/${event.id}/manage`}>
-                  <Button className="w-full gradient-primary text-white">
-                    Manage Event
-                  </Button>
-                </Link>
+              {event.status === 'pending' && (
+                <p className="text-sm text-warning text-center">
+                  This event is pending approval
+                </p>
               )}
             </div>
 
@@ -260,7 +281,7 @@ export default function EventDetailPage() {
             </div>
 
             {/* QR Code Preview */}
-            {(user?.role === 'organizer' || user?.role === 'admin') && (
+            {(role === 'organizer' || role === 'admin') && (
               <div className="bg-card rounded-2xl border border-border p-6">
                 <h3 className="font-semibold mb-4">Event QR Code</h3>
                 <div className="flex justify-center p-4 bg-white rounded-xl">
@@ -306,6 +327,24 @@ export default function EventDetailPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Event Modal */}
+        {showEditModal && (
+          <EditEventDialog
+            open={showEditModal}
+            onOpenChange={setShowEditModal}
+            event={{
+              id: event.id,
+              title: event.title,
+              description: event.description,
+              date: event.date,
+              time: event.time,
+              venue: event.venue,
+              category: event.category,
+              capacity: event.capacity,
+            }}
+          />
+        )}
       </div>
     </MainLayout>
   );

@@ -112,7 +112,7 @@ export function useCreateEvent() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Event;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
