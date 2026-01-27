@@ -25,6 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateEvent } from '@/hooks/useEvents';
+import { useCreateBulkResourceRequests } from '@/hooks/useResourceRequests';
+import { ResourceRequestSection, ResourceRequestItem } from '@/components/events/ResourceRequestSection';
 
 type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
 
@@ -40,6 +42,7 @@ const categories: { value: EventCategory; label: string }[] = [
 export default function CreateEventPage() {
   const navigate = useNavigate();
   const createEventMutation = useCreateEvent();
+  const createResourceRequestsMutation = useCreateBulkResourceRequests();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -49,11 +52,12 @@ export default function CreateEventPage() {
     category: '' as EventCategory,
     capacity: '',
   });
+  const [resourceRequests, setResourceRequests] = useState<ResourceRequestItem[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    await createEventMutation.mutateAsync({
+    const event = await createEventMutation.mutateAsync({
       title: formData.title,
       description: formData.description,
       date: formData.date,
@@ -63,12 +67,23 @@ export default function CreateEventPage() {
       capacity: parseInt(formData.capacity),
     });
 
+    // Submit resource requests if any
+    const validRequests = resourceRequests.filter(r => r.resource_type_id && r.requested_quantity > 0);
+    if (validRequests.length > 0 && event?.id) {
+      await createResourceRequestsMutation.mutateAsync({
+        event_id: event.id,
+        requests: validRequests,
+      });
+    }
+
     navigate('/events');
   };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const isSubmitting = createEventMutation.isPending || createResourceRequestsMutation.isPending;
 
   return (
     <MainLayout>
@@ -227,6 +242,14 @@ export default function CreateEventPage() {
             </div>
           </div>
 
+          {/* Resource Requests Section */}
+          <div className="bg-card rounded-2xl border border-border p-6">
+            <ResourceRequestSection
+              requests={resourceRequests}
+              onChange={setResourceRequests}
+            />
+          </div>
+
           {/* Submit Buttons */}
           <div className="flex gap-4 justify-end">
             <Button type="button" variant="outline" onClick={() => navigate(-1)}>
@@ -235,9 +258,9 @@ export default function CreateEventPage() {
             <Button 
               type="submit" 
               className="gradient-primary text-white min-w-32"
-              disabled={createEventMutation.isPending}
+              disabled={isSubmitting}
             >
-              {createEventMutation.isPending ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Submitting...
