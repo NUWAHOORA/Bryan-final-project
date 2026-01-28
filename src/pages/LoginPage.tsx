@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, Users, Shield, BookOpen } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, Users, Shield, BookOpen } from 'lucide-react';
+import ucuLogo from '@/assets/ucu-logo.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -104,12 +105,10 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <GraduationCap className="w-8 h-8" />
-              </div>
+            <div className="flex items-center gap-4 mb-8">
+              <img src={ucuLogo} alt="UCU Logo" className="w-20 h-20 object-contain" />
               <div>
-                <h1 className="text-2xl font-bold">UniEvents</h1>
+                <h1 className="text-2xl font-bold">UCU Events</h1>
                 <p className="text-white/70 text-sm">Event Management System</p>
               </div>
             </div>
@@ -154,11 +153,9 @@ export default function LoginPage() {
           className="w-full max-w-md"
         >
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-              <GraduationCap className="w-7 h-7 text-white" />
-            </div>
+            <img src={ucuLogo} alt="UCU Logo" className="w-14 h-14 object-contain" />
             <div>
-              <h1 className="text-xl font-bold">UniEvents</h1>
+              <h1 className="text-xl font-bold">UCU Events</h1>
               <p className="text-muted-foreground text-sm">Event Management</p>
             </div>
           </div>
