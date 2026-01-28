@@ -105,8 +105,8 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex items-center gap-4 mb-8">
-              <img src={ucuLogo} alt="UCU Logo" className="w-20 h-20 object-contain" />
+            <div className="flex flex-col items-start mb-8">
+              <img src={ucuLogo} alt="UCU Logo" className="w-48 h-48 object-contain mb-4" />
               <div>
                 <h1 className="text-2xl font-bold">UCU Events</h1>
                 <p className="text-white/70 text-sm">Event Management System</p>
@@ -152,9 +152,9 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="w-full max-w-md"
         >
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <img src={ucuLogo} alt="UCU Logo" className="w-14 h-14 object-contain" />
-            <div>
+          <div className="lg:hidden flex flex-col items-center mb-8">
+            <img src={ucuLogo} alt="UCU Logo" className="w-32 h-32 object-contain mb-2" />
+            <div className="text-center">
               <h1 className="text-xl font-bold">UCU Events</h1>
               <p className="text-muted-foreground text-sm">Event Management</p>
             </div>
