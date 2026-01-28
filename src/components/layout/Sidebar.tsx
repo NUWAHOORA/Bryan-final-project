@@ -19,8 +19,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { useUnreadNotificationCount } from '@/hooks/useNotifications';
 
-const sidebarLinks = {
+interface SidebarLink {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  showBadge?: boolean;
+}
+
+const sidebarLinks: Record<string, SidebarLink[]> = {
   admin: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'All Events', path: '/events' },
@@ -28,7 +36,7 @@ const sidebarLinks = {
     { icon: Package, label: 'Resources', path: '/resources' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
+    { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
   ],
   organizer: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -36,14 +44,14 @@ const sidebarLinks = {
     { icon: Plus, label: 'Create Event', path: '/events/create' },
     { icon: QrCode, label: 'Attendance', path: '/attendance' },
     { icon: BarChart3, label: 'Reports', path: '/analytics' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
+    { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
   ],
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
     { icon: Calendar, label: 'Browse Events', path: '/events' },
     { icon: CheckCircle, label: 'My Registrations', path: '/registrations' },
     { icon: QrCode, label: 'My Tickets', path: '/tickets' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
+    { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
   ],
 };
 
@@ -51,6 +59,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { profile, role, signOut } = useAuth();
   const location = useLocation();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
 
   if (!profile || !role) return null;
 
@@ -98,31 +107,44 @@ export function Sidebar() {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {links.map((link) => {
           const isActive = location.pathname === link.path;
+          const showBadge = link.showBadge && unreadCount > 0;
           return (
             <Link key={link.path} to={link.path}>
               <motion.div
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
                   isActive 
                     ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg" 
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 )}
               >
-                <link.icon className="w-5 h-5 flex-shrink-0" />
+                <div className="relative flex-shrink-0">
+                  <link.icon className="w-5 h-5" />
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="font-medium truncate"
+                      className="font-medium truncate flex-1"
                     >
                       {link.label}
                     </motion.span>
                   )}
                 </AnimatePresence>
+                {!collapsed && showBadge && (
+                  <span className="bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
               </motion.div>
             </Link>
           );
