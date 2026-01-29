@@ -106,7 +106,7 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="flex flex-col items-start mb-8">
-              <img src={ucuLogo} alt="UCU Logo" className="w-48 h-48 object-contain mb-4" />
+              <img src={ucuLogo} alt="UCU Logo" className="w-72 h-72 object-contain mb-6" />
               <div>
                 <h1 className="text-2xl font-bold">UCU Events</h1>
                 <p className="text-white/70 text-sm">Event Management System</p>
