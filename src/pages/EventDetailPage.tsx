@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { EditEventDialog } from '@/components/events/EditEventDialog';
+import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -190,6 +191,15 @@ export default function EventDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Planning Meetings Section */}
+            {(role === 'admin' || role === 'organizer') && (
+              <EventMeetingsSection
+                eventId={event.id}
+                eventTitle={event.title}
+                isOrganizer={isOwner}
+              />
+            )}
           </motion.div>
 
           {/* Sidebar */}

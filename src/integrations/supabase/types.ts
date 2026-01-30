@@ -164,6 +164,100 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_participants: {
+        Row: {
+          attended: boolean
+          id: string
+          invited_at: string
+          joined_at: string | null
+          left_at: string | null
+          meeting_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          attended?: boolean
+          id?: string
+          invited_at?: string
+          joined_at?: string | null
+          left_at?: string | null
+          meeting_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          attended?: boolean
+          id?: string
+          invited_at?: string
+          joined_at?: string | null
+          left_at?: string | null
+          meeting_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_participants_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          agenda: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_minutes: number
+          event_id: string
+          id: string
+          meeting_date: string
+          meeting_link: string
+          meeting_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agenda?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_minutes?: number
+          event_id: string
+          id?: string
+          meeting_date: string
+          meeting_link: string
+          meeting_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agenda?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_minutes?: number
+          event_id?: string
+          id?: string
+          meeting_date?: string
+          meeting_link?: string
+          meeting_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
