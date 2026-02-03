@@ -19,6 +19,7 @@ import AttendancePage from "./pages/AttendancePage";
 import UsersPage from "./pages/UsersPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import MeetingsPage from "./pages/MeetingsPage";
+import EmailSettingsPage from "./pages/EmailSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/users" element={<UsersPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/meetings" element={<MeetingsPage />} />
+            <Route path="/email-settings" element={<EmailSettingsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
