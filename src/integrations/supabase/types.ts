@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_notification_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_id: string | null
+          id: string
+          meeting_id: string | null
+          notification_type: string
+          recipient_email: string
+          recipient_user_id: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          meeting_id?: string | null
+          notification_type: string
+          recipient_email: string
+          recipient_user_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          id?: string
+          meeting_id?: string | null
+          notification_type?: string
+          recipient_email?: string
+          recipient_user_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notification_logs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_notification_logs_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_notification_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          id: string
+          notification_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          notification_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          notification_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       event_resource_requests: {
         Row: {
           event_id: string
@@ -359,6 +443,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_email_preferences: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          notification_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          notification_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          notification_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_email_preferences_notification_type_fkey"
+            columns: ["notification_type"]
+            isOneToOne: false
+            referencedRelation: "email_notification_settings"
+            referencedColumns: ["notification_type"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -400,6 +519,29 @@ export type Database = {
       is_meeting_participant: {
         Args: { _meeting_id: string; _user_id: string }
         Returns: boolean
+      }
+      send_email_notification: {
+        Args: {
+          additional_message?: string
+          event_date?: string
+          event_id?: string
+          event_time?: string
+          event_title?: string
+          event_venue?: string
+          meeting_date?: string
+          meeting_id?: string
+          meeting_link?: string
+          meeting_time?: string
+          meeting_title?: string
+          notification_type: string
+          organizer_name?: string
+          recipient_email: string
+          recipient_name: string
+          recipient_user_id: string
+          status?: string
+          subject: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   GraduationCap,
   Package,
-  Video
+  Video,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: Users, label: 'Users', path: '/users' },
     { icon: BarChart3, label: 'Analytics', path: '/analytics' },
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
+    { icon: Mail, label: 'Email Settings', path: '/email-settings' },
   ],
   organizer: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -48,6 +50,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: QrCode, label: 'Attendance', path: '/attendance' },
     { icon: BarChart3, label: 'Reports', path: '/analytics' },
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
+    { icon: Mail, label: 'Email Preferences', path: '/email-settings' },
   ],
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -56,6 +59,7 @@ const sidebarLinks: Record<string, SidebarLink[]> = {
     { icon: CheckCircle, label: 'My Registrations', path: '/registrations' },
     { icon: QrCode, label: 'My Tickets', path: '/tickets' },
     { icon: Bell, label: 'Notifications', path: '/notifications', showBadge: true },
+    { icon: Mail, label: 'Email Preferences', path: '/email-settings' },
   ],
 };
 
