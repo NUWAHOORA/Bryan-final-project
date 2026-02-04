@@ -49,6 +49,52 @@ export function useUsers() {
   });
 }
 
+export function useAddUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userData: { 
+      name: string; 
+      email: string; 
+      password: string; 
+      role: 'admin' | 'organizer' | 'student' 
+    }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      // Use the admin API via edge function to create user
+      const response = await supabase.functions.invoke('create-user', {
+        body: { 
+          email: userData.email,
+          password: userData.password,
+          name: userData.name,
+          role: userData.role
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User created successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create user');
+    }
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 

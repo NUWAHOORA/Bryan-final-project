@@ -11,19 +11,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useUsers, useDeleteUser, UserWithRole } from '@/hooks/useUsers';
+import { useUsers, useDeleteUser, useAddUser, UserWithRole } from '@/hooks/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import { UsersTable } from '@/components/users/UsersTable';
 import { UserStatsCards } from '@/components/users/UserStatsCards';
 import { DeleteUserDialog } from '@/components/users/DeleteUserDialog';
+import { AddUserDialog } from '@/components/users/AddUserDialog';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [userToDelete, setUserToDelete] = useState<UserWithRole | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   
   const { data: users = [], isLoading } = useUsers();
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+  const { mutate: addUser, isPending: isAdding } = useAddUser();
   const { user, role } = useAuth();
 
   const isAdmin = role === 'admin';
@@ -47,6 +50,12 @@ export default function UsersPage() {
     }
   };
 
+  const handleAddUser = (data: { name: string; email: string; password: string; role: 'admin' | 'organizer' | 'student' }) => {
+    addUser(data, {
+      onSuccess: () => setShowAddDialog(false)
+    });
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -67,7 +76,10 @@ export default function UsersPage() {
             <p className="text-muted-foreground mt-1">Manage all users and their roles</p>
           </div>
           {isAdmin && (
-            <Button className="gradient-primary text-primary-foreground">
+            <Button 
+              className="gradient-primary text-primary-foreground"
+              onClick={() => setShowAddDialog(true)}
+            >
               <UserPlus className="w-4 h-4 mr-2" />
               Add User
             </Button>
@@ -127,6 +139,14 @@ export default function UsersPage() {
           onOpenChange={(open) => !open && setUserToDelete(null)}
           onConfirm={confirmDelete}
           isDeleting={isDeleting}
+        />
+
+        {/* Add User Dialog */}
+        <AddUserDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onAddUser={handleAddUser}
+          isLoading={isAdding}
         />
       </div>
     </MainLayout>
