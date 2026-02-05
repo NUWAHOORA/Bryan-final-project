@@ -416,6 +416,41 @@ export type Database = {
         }
         Relationships: []
       }
+      registrations: {
+        Row: {
+          attended: boolean
+          attended_at: string | null
+          event_id: string
+          id: string
+          registered_at: string
+          user_id: string
+        }
+        Insert: {
+          attended?: boolean
+          attended_at?: string | null
+          event_id: string
+          id?: string
+          registered_at?: string
+          user_id: string
+        }
+        Update: {
+          attended?: boolean
+          attended_at?: string | null
+          event_id?: string
+          id?: string
+          registered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_types: {
         Row: {
           available_quantity: number
