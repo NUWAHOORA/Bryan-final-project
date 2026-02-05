@@ -1,14 +1,14 @@
 import { motion } from 'framer-motion';
-import { CheckCircle, Calendar, Clock, MapPin, XCircle } from 'lucide-react';
+ import { CheckCircle, Calendar, Clock, MapPin, XCircle, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockEvents } from '@/lib/mockData';
+ import { useMyRegistrations, useCancelRegistration } from '@/hooks/useRegistrations';
 import { Link } from 'react-router-dom';
 
 export default function RegistrationsPage() {
-  // Mock registered events
-  const registeredEvents = mockEvents.filter(e => e.status === 'approved').slice(0, 4);
+   const { data: registrations, isLoading } = useMyRegistrations();
+   const cancelMutation = useCancelRegistration();
 
   return (
     <MainLayout>
@@ -32,11 +32,16 @@ export default function RegistrationsPage() {
           </motion.p>
         </div>
 
-        {/* Registrations List */}
-        <div className="space-y-4">
-          {registeredEvents.map((event, index) => (
+ 
+         {isLoading ? (
+           <div className="flex items-center justify-center py-16">
+             <Loader2 className="w-8 h-8 animate-spin text-primary" />
+           </div>
+         ) : registrations && registrations.length > 0 ? (
+           <div className="space-y-4">
+             {registrations.map((registration, index) => (
             <motion.div
-              key={event.id}
+                 key={registration.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -44,37 +49,54 @@ export default function RegistrationsPage() {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-success/10 text-success border-0 flex items-center gap-1">
+                   {registration.attended ? (
+                     <Badge className="bg-primary/10 text-primary border-0 flex items-center gap-1">
+                       <CheckCircle className="w-3 h-3" />
+                       Attended
+                     </Badge>
+                   ) : (
+                     <Badge className="bg-success/10 text-success border-0 flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" />
                     Registered
                   </Badge>
+                   )}
                   <Badge variant="outline" className="capitalize">
-                    {event.category}
+                     {registration.event?.category}
                   </Badge>
                 </div>
-                <h3 className="text-lg font-semibold mb-1">{event.title}</h3>
+                 <h3 className="text-lg font-semibold mb-1">{registration.event?.title}</h3>
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {new Date(event.date).toLocaleDateString()}
+                     {registration.event?.date ? new Date(registration.event.date).toLocaleDateString() : 'N/A'}
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {event.time}
+                     {registration.event?.time}
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    {event.venue}
+                     {registration.event?.venue}
                   </span>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10">
+                 <Button 
+                   variant="outline" 
+                   size="sm" 
+                   className="text-destructive border-destructive hover:bg-destructive/10"
+                   onClick={() => registration.event && cancelMutation.mutate(registration.event.id)}
+                   disabled={cancelMutation.isPending}
+                 >
+                   {cancelMutation.isPending ? (
+                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                   ) : (
                   <XCircle className="w-4 h-4 mr-1" />
+                   )}
                   Cancel
                 </Button>
-                <Link to={`/events/${event.id}`}>
+                 <Link to={`/events/${registration.event?.id}`}>
                   <Button size="sm" variant="outline">
                     View Details
                   </Button>
@@ -82,9 +104,8 @@ export default function RegistrationsPage() {
               </div>
             </motion.div>
           ))}
-        </div>
-
-        {registeredEvents.length === 0 && (
+           </div>
+         ) : (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

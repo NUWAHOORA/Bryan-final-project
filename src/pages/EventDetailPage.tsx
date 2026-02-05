@@ -1,4 +1,4 @@
-import { useState } from 'react';
+ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { EditEventDialog } from '@/components/events/EditEventDialog';
 import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
+ import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -47,7 +48,9 @@ export default function EventDetailPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { data: event, isLoading } = useEvent(id || '');
-  const [isRegistered, setIsRegistered] = useState(false);
+   const { data: isRegistered, isLoading: isCheckingRegistration } = useIsRegistered(id || '');
+   const registerMutation = useRegisterForEvent();
+   const cancelMutation = useCancelRegistration();
   const [showQRModal, setShowQRModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -80,19 +83,15 @@ export default function EventDetailPage() {
   const canEdit = isOwner || role === 'admin';
 
   const handleRegister = () => {
-    setIsRegistered(true);
-    toast({
-      title: "Registration successful!",
-      description: `You've registered for ${event.title}`,
-    });
+     if (event) {
+       registerMutation.mutate(event.id);
+     }
   };
 
   const handleUnregister = () => {
-    setIsRegistered(false);
-    toast({
-      title: "Registration cancelled",
-      description: "You've been unregistered from this event",
-    });
+     if (event) {
+       cancelMutation.mutate(event.id);
+     }
   };
 
   return (
@@ -240,7 +239,12 @@ export default function EventDetailPage() {
 
               {role === 'student' && event.status === 'approved' && (
                 <>
-                  {isRegistered ? (
+                   {isCheckingRegistration ? (
+                     <Button className="w-full" disabled>
+                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                       Checking...
+                     </Button>
+                   ) : isRegistered ? (
                     <div className="space-y-3">
                       <Button 
                         className="w-full gradient-success text-white"
@@ -253,18 +257,26 @@ export default function EventDetailPage() {
                         variant="outline" 
                         className="w-full border-destructive text-destructive hover:bg-destructive/10"
                         onClick={handleUnregister}
+                         disabled={cancelMutation.isPending}
                       >
-                        Cancel Registration
+                         {cancelMutation.isPending ? (
+                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                         ) : null}
+                         {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Registration'}
                       </Button>
                     </div>
                   ) : (
                     <Button 
                       className="w-full gradient-primary text-white"
                       onClick={handleRegister}
-                      disabled={spotsLeft <= 0}
+                       disabled={spotsLeft <= 0 || registerMutation.isPending}
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      {spotsLeft <= 0 ? 'Event Full' : 'Register Now'}
+                       {registerMutation.isPending ? (
+                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                       ) : (
+                         <CheckCircle className="w-4 h-4 mr-2" />
+                       )}
+                       {registerMutation.isPending ? 'Registering...' : spotsLeft <= 0 ? 'Event Full' : 'Register Now'}
                     </Button>
                   )}
                 </>
