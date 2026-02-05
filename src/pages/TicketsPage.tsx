@@ -1,15 +1,18 @@
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { Ticket, Calendar, Clock, MapPin, Download } from 'lucide-react';
+ import { Ticket, Calendar, Clock, MapPin, Download, Loader2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { mockEvents } from '@/lib/mockData';
+ import { useMyRegistrations } from '@/hooks/useRegistrations';
 import { useAuth } from '@/contexts/AuthContext';
+ import { Link } from 'react-router-dom';
 
 export default function TicketsPage() {
   const { user } = useAuth();
-  // Mock registered events
-  const registeredEvents = mockEvents.filter(e => e.status === 'approved').slice(0, 3);
+   const { data: registrations, isLoading } = useMyRegistrations();
+   
+   // Filter only approved events
+   const ticketRegistrations = registrations?.filter(r => r.event?.status === 'approved') || [];
 
   return (
     <MainLayout>
@@ -33,11 +36,15 @@ export default function TicketsPage() {
           </motion.p>
         </div>
 
-        {/* Tickets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {registeredEvents.map((event, index) => (
+         {isLoading ? (
+           <div className="flex items-center justify-center py-16">
+             <Loader2 className="w-8 h-8 animate-spin text-primary" />
+           </div>
+         ) : ticketRegistrations.length > 0 ? (
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {ticketRegistrations.map((registration, index) => (
             <motion.div
-              key={event.id}
+                 key={registration.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -45,33 +52,32 @@ export default function TicketsPage() {
             >
               <div className="h-2 gradient-primary" />
               <div className="p-6">
-                <h3 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h3>
+                   <h3 className="font-semibold text-lg mb-2 line-clamp-1">{registration.event?.title}</h3>
                 
                 <div className="space-y-2 mb-6 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-primary" />
                     <span>
-                      {new Date(event.date).toLocaleDateString('en-US', {
+                       {registration.event?.date ? new Date(registration.event.date).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric'
-                      })}
+                       }) : 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-primary" />
-                    <span>{event.time}</span>
+                     <span>{registration.event?.time}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-primary" />
-                    <span className="truncate">{event.venue}</span>
+                     <span className="truncate">{registration.event?.venue}</span>
                   </div>
                 </div>
 
-                {/* QR Code */}
                 <div className="flex justify-center p-4 bg-white rounded-xl mb-4">
                   <QRCodeSVG
-                    value={`ticket:${event.id}:${user?.id}`}
+                     value={`ticket:${registration.event_id}:${user?.id}:${registration.id}`}
                     size={150}
                     level="H"
                     includeMargin
@@ -89,9 +95,8 @@ export default function TicketsPage() {
               </div>
             </motion.div>
           ))}
-        </div>
-
-        {registeredEvents.length === 0 && (
+           </div>
+         ) : (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -101,7 +106,10 @@ export default function TicketsPage() {
               <Ticket className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No tickets yet</h3>
-            <p className="text-muted-foreground">Register for events to get your tickets</p>
+             <p className="text-muted-foreground mb-4">Register for events to get your tickets</p>
+             <Link to="/events">
+               <Button>Browse Events</Button>
+             </Link>
           </motion.div>
         )}
       </div>
