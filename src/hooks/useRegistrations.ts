@@ -119,29 +119,54 @@
    const { user } = useAuth();
    const { toast } = useToast();
  
-   return useMutation({
-     mutationFn: async (eventId: string) => {
-       if (!user) throw new Error('Not authenticated');
- 
-       const { data, error } = await supabase
-         .from('registrations')
-         .insert([{ event_id: eventId, user_id: user.id }])
-         .select()
-         .single();
- 
-       if (error) throw error;
-       return data;
-     },
-     onSuccess: (_, eventId) => {
-       queryClient.invalidateQueries({ queryKey: ['registration', eventId] });
-       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-       queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] });
-       queryClient.invalidateQueries({ queryKey: ['events'] });
-       toast({
-         title: 'Registration successful!',
-         description: 'You have been registered for this event.',
-       });
-     },
+  return useMutation({
+    mutationFn: async (eventId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('registrations')
+        .insert([{ event_id: eventId, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Fetch event details and user profile for email
+      const [{ data: eventData }, { data: profile }] = await Promise.all([
+        supabase.from('events').select('title, date, time, venue').eq('id', eventId).single(),
+        supabase.from('profiles').select('name, email').eq('user_id', user.id).single(),
+      ]);
+
+      // Send registration email notification
+      if (eventData && profile) {
+        supabase.functions.invoke('send-email-notification', {
+          body: {
+            notification_type: 'event_registration',
+            recipient_email: profile.email,
+            recipient_user_id: user.id,
+            recipient_name: profile.name,
+            subject: `Registration Confirmed: ${eventData.title}`,
+            event_id: eventId,
+            event_title: eventData.title,
+            event_date: eventData.date,
+            event_time: eventData.time,
+            event_venue: eventData.venue,
+          },
+        }).catch(err => console.error('Email notification error:', err));
+      }
+
+      return data;
+    },
+    onSuccess: (_, eventId) => {
+      queryClient.invalidateQueries({ queryKey: ['registration', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      queryClient.invalidateQueries({ queryKey: ['event-registrations', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: 'Registration successful!',
+        description: 'You have been registered for this event. A confirmation email has been sent.',
+      });
+    },
      onError: (error: Error) => {
        toast({
          title: 'Registration failed',
