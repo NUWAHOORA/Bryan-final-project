@@ -19,12 +19,17 @@ export default function EventsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  const today = new Date().toISOString().split('T')[0];
+
   const filteredEvents = events?.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory;
     return matchesSearch && matchesCategory;
   }) || [];
+
+  const upcomingEvents = filteredEvents.filter(e => e.date >= today);
+  const pastEvents = filteredEvents.filter(e => e.date < today);
 
   return (
     <MainLayout>
@@ -118,37 +123,76 @@ export default function EventsPage() {
           </div>
         )}
 
-        {/* Events Grid */}
-        {!isLoading && filteredEvents.length > 0 && (
-          <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-            : 'flex flex-col gap-4'
-          }>
-            {filteredEvents.map((event, index) => (
-              <EventCard 
-                key={event.id} 
-                event={{
-                  id: event.id,
-                  title: event.title,
-                  description: event.description || '',
-                  date: event.date,
-                  time: event.time,
-                  venue: event.venue,
-                  category: event.category,
-                  capacity: event.capacity,
-                  registeredCount: event.registered_count,
-                  attendedCount: event.attended_count,
-                  status: event.status,
-                  organizerId: event.organizer_id,
-                  organizerName: event.organizer_name || 'Unknown',
-                  imageUrl: event.image_url || undefined,
-                  qrCode: event.qr_code || undefined,
-                  createdAt: event.created_at
-                }} 
-                index={index} 
-              />
-            ))}
-          </div>
+        {/* Upcoming Events */}
+        {!isLoading && upcomingEvents.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
+            <div className={viewMode === 'grid' 
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10'
+              : 'flex flex-col gap-4 mb-10'
+            }>
+              {upcomingEvents.map((event, index) => (
+                <EventCard 
+                  key={event.id} 
+                  event={{
+                    id: event.id,
+                    title: event.title,
+                    description: event.description || '',
+                    date: event.date,
+                    time: event.time,
+                    venue: event.venue,
+                    category: event.category,
+                    capacity: event.capacity,
+                    registeredCount: event.registered_count,
+                    attendedCount: event.attended_count,
+                    status: event.status,
+                    organizerId: event.organizer_id,
+                    organizerName: event.organizer_name || 'Unknown',
+                    imageUrl: event.image_url || undefined,
+                    qrCode: event.qr_code || undefined,
+                    createdAt: event.created_at
+                  }} 
+                  index={index} 
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Past Events */}
+        {!isLoading && pastEvents.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold mb-4 text-muted-foreground">Past Events</h2>
+            <div className={viewMode === 'grid' 
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75'
+              : 'flex flex-col gap-4 opacity-75'
+            }>
+              {pastEvents.map((event, index) => (
+                <EventCard 
+                  key={event.id} 
+                  event={{
+                    id: event.id,
+                    title: event.title,
+                    description: event.description || '',
+                    date: event.date,
+                    time: event.time,
+                    venue: event.venue,
+                    category: event.category,
+                    capacity: event.capacity,
+                    registeredCount: event.registered_count,
+                    attendedCount: event.attended_count,
+                    status: event.status,
+                    organizerId: event.organizer_id,
+                    organizerName: event.organizer_name || 'Unknown',
+                    imageUrl: event.image_url || undefined,
+                    qrCode: event.qr_code || undefined,
+                    createdAt: event.created_at
+                  }} 
+                  index={index} 
+                />
+              ))}
+            </div>
+          </>
         )}
 
         {/* Empty State */}

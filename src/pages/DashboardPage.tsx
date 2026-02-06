@@ -33,12 +33,7 @@ export default function DashboardPage() {
   const totalAttendance = events?.reduce((sum, e) => sum + e.attended_count, 0) || 0;
   const attendanceRate = totalRegistrations > 0 ? ((totalAttendance / totalRegistrations) * 100).toFixed(1) : '0';
 
-  // Mock monthly trends for chart (would come from real data in production)
   const monthlyTrends = [
-    { month: 'Sep', events: 8, registrations: 1200 },
-    { month: 'Oct', events: 12, registrations: 1800 },
-    { month: 'Nov', events: 10, registrations: 1500 },
-    { month: 'Dec', events: 6, registrations: 900 },
     { month: 'Jan', events: totalEvents, registrations: totalRegistrations },
   ];
 

@@ -211,6 +211,26 @@ function getEmailTemplate(data: EmailNotificationRequest): string {
       `;
       break;
 
+    case "event_registration":
+      content = `
+        <div class="header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+          <h1>🎟️ Registration Confirmed</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${data.recipient_name || "there"},</p>
+          <p>You have successfully registered for the following event:</p>
+          <div class="details">
+            <p><strong>Event:</strong> ${data.event_title}</p>
+            <p><strong>Date:</strong> ${data.event_date}</p>
+            <p><strong>Time:</strong> ${data.event_time}</p>
+            <p><strong>Venue:</strong> ${data.event_venue}</p>
+          </div>
+          <p>Your ticket and QR code are available in the app.</p>
+          <a href="${baseUrl}/tickets" class="button">View My Ticket</a>
+        </div>
+      `;
+      break;
+
     case "event_reminder":
       content = `
         <div class="header" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);">
