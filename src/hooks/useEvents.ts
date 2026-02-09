@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { checkSchedulingConflict } from '@/hooks/useSchedulingConflict';
 
 export interface Event {
   id: string;
@@ -96,6 +97,12 @@ export function useCreateEvent() {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
+      // Check for scheduling conflicts
+      const conflict = await checkSchedulingConflict(eventData.date, eventData.venue);
+      if (conflict.hasConflict) {
+        throw new Error(`Scheduling conflict: "${conflict.conflictingEvent}" is already booked at ${eventData.venue} on ${eventData.date}`);
+      }
+
       const { data, error } = await supabase
         .from('events')
         .insert([{
@@ -137,6 +144,20 @@ export function useUpdateEventStatus() {
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => {
+      // If approving, check that resources have been allocated
+      if (status === 'approved') {
+        const { data: allocations, error: allocError } = await supabase
+          .from('event_resources')
+          .select('id')
+          .eq('event_id', id);
+
+        if (allocError) throw allocError;
+
+        if (!allocations || allocations.length === 0) {
+          throw new Error('Resources must be allocated before approving the event. Please allocate resources first.');
+        }
+      }
+
       const { error } = await supabase
         .from('events')
         .update({ status })

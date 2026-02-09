@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { checkSchedulingConflict } from '@/hooks/useSchedulingConflict';
 
 export function useUpdateEvent() {
   const queryClient = useQueryClient();
@@ -18,7 +19,15 @@ export function useUpdateEvent() {
       capacity?: number;
     }) => {
       const { id, ...updateData } = data;
-      
+
+      // Check for scheduling conflicts if date or venue changed
+      if (updateData.date && updateData.venue) {
+        const conflict = await checkSchedulingConflict(updateData.date, updateData.venue, id);
+        if (conflict.hasConflict) {
+          throw new Error(`Scheduling conflict: "${conflict.conflictingEvent}" is already booked at ${updateData.venue} on ${updateData.date}`);
+        }
+      }
+
       const { error } = await supabase
         .from('events')
         .update(updateData)
