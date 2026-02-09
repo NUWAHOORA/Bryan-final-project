@@ -1,22 +1,56 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Clock, Loader2, Package } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Loader2, Package, AlertTriangle } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
+import { useEventResources } from '@/hooks/useResources';
 import { ResourceAllocationDialog } from '@/components/resources/ResourceAllocationDialog';
+import { useToast } from '@/hooks/use-toast';
+
+function EventResourceStatus({ eventId }: { eventId: string }) {
+  const { data: resources } = useEventResources(eventId);
+  const hasResources = resources && resources.length > 0;
+
+  return (
+    <Badge 
+      className={`flex items-center gap-1 border-0 ${
+        hasResources 
+          ? 'bg-success/10 text-success' 
+          : 'bg-destructive/10 text-destructive'
+      }`}
+    >
+      {hasResources ? (
+        <>
+          <Package className="w-3 h-3" />
+          Resources Allocated ({resources.length})
+        </>
+      ) : (
+        <>
+          <AlertTriangle className="w-3 h-3" />
+          No Resources Allocated
+        </>
+      )}
+    </Badge>
+  );
+}
 
 export default function ApprovalsPage() {
   const { data: events, isLoading } = useEvents();
   const updateStatusMutation = useUpdateEventStatus();
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
+  const { toast } = useToast();
 
   const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<{ id: string; title: string } | null>(null);
 
   const handleApprove = async (eventId: string) => {
-    await updateStatusMutation.mutateAsync({ id: eventId, status: 'approved' });
+    try {
+      await updateStatusMutation.mutateAsync({ id: eventId, status: 'approved' });
+    } catch (error) {
+      // Error toast is already handled by the mutation's onError
+    }
   };
 
   const handleReject = async (eventId: string) => {
@@ -72,7 +106,7 @@ export default function ApprovalsPage() {
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <Badge className="bg-warning/10 text-warning border-0 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         Pending Review
@@ -80,6 +114,7 @@ export default function ApprovalsPage() {
                       <Badge variant="outline" className="capitalize">
                         {event.category}
                       </Badge>
+                      <EventResourceStatus eventId={event.id} />
                     </div>
                     <h3 className="text-xl font-semibold mb-1">{event.title}</h3>
                     <p className="text-muted-foreground text-sm mb-2">
