@@ -145,21 +145,49 @@ export function useUserMeetings() {
 
       if (partError) throw partError;
 
-      const meetingIds = participations?.map(p => p.meeting_id) || [];
+      // Get meetings for events user is registered for
+      const { data: registrations, error: regError } = await supabase
+        .from('registrations')
+        .select('event_id')
+        .eq('user_id', user.id);
 
-      if (meetingIds.length === 0) return [];
+      if (regError) throw regError;
 
-      const { data: meetings, error } = await supabase
-        .from('meetings')
-        .select('*')
-        .in('id', meetingIds)
-        .order('meeting_date', { ascending: true });
+      const registeredEventIds = registrations?.map(r => r.event_id) || [];
+      const participantMeetingIds = participations?.map(p => p.meeting_id) || [];
 
-      if (error) throw error;
+      if (registeredEventIds.length === 0 && participantMeetingIds.length === 0) return [];
+
+      // Fetch meetings from both sources
+      let allMeetings: any[] = [];
+
+      if (participantMeetingIds.length > 0) {
+        const { data } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('id', participantMeetingIds);
+        if (data) allMeetings.push(...data);
+      }
+
+      if (registeredEventIds.length > 0) {
+        const { data } = await supabase
+          .from('meetings')
+          .select('*')
+          .in('event_id', registeredEventIds);
+        if (data) allMeetings.push(...data);
+      }
+
+      // Deduplicate by id
+      const meetingMap = new Map(allMeetings.map(m => [m.id, m]));
+      const meetings = [...meetingMap.values()].sort(
+        (a, b) => a.meeting_date.localeCompare(b.meeting_date)
+      );
+
+      if (meetings.length === 0) return [];
 
       // Fetch event titles and creator names
-      const eventIds = [...new Set(meetings?.map(m => m.event_id) || [])];
-      const creatorIds = [...new Set(meetings?.map(m => m.created_by) || [])];
+      const eventIds = [...new Set(meetings.map(m => m.event_id))];
+      const creatorIds = [...new Set(meetings.map(m => m.created_by))];
 
       const [{ data: events }, { data: profiles }] = await Promise.all([
         supabase.from('events').select('id, title').in('id', eventIds),
@@ -169,7 +197,7 @@ export function useUserMeetings() {
       const eventMap = new Map(events?.map(e => [e.id, e.title]) || []);
       const profileMap = new Map(profiles?.map(p => [p.user_id, p.name]) || []);
 
-      return meetings?.map(meeting => ({
+      return meetings.map(meeting => ({
         ...meeting,
         event_title: eventMap.get(meeting.event_id) || 'Unknown Event',
         creator_name: profileMap.get(meeting.created_by) || 'Unknown',
