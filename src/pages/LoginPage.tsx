@@ -85,49 +85,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <img src={campusBg} alt="UCU Campus" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-        
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <img src={ucuLogo} alt="UCU Logo" className="w-72 h-72 object-contain" />
-          </motion.div>
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Full-page background */}
+      <img src={campusBg} alt="UCU Campus" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/60" />
+
+      {/* Centered card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-md bg-background/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl"
+      >
+        <div className="flex flex-col items-center mb-6">
+          <img src={ucuLogo} alt="UCU Logo" className="w-24 h-24 object-contain mb-4" />
+          <h2 className="text-2xl font-bold">
+            {isLogin ? 'Welcome back' : 'Create account'}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {isLogin 
+              ? 'Sign in to your account to continue'
+              : 'Sign up to get started with UCU Events'}
+          </p>
         </div>
-      </div>
-
-      {/* Right Panel - Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-md"
-        >
-          <div className="lg:hidden flex flex-col items-center mb-8">
-            <img src={ucuLogo} alt="UCU Logo" className="w-32 h-32 object-contain mb-2" />
-            <div className="text-center">
-              <h1 className="text-xl font-bold">UCU Events</h1>
-              <p className="text-muted-foreground text-sm">Event Management</p>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h2 className="text-3xl font-bold mb-2">
-              {isLogin ? 'Welcome back' : 'Create account'}
-            </h2>
-            <p className="text-muted-foreground">
-              {isLogin 
-                ? 'Sign in to your account to continue'
-                : 'Sign up to get started with UniEvents'}
-            </p>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
@@ -253,8 +233,7 @@ export default function LoginPage() {
               {isLogin ? 'Sign Up' : 'Sign In'}
             </button>
           </p>
-        </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }
