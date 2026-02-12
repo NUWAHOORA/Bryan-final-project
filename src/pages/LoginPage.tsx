@@ -99,8 +99,8 @@ export default function LoginPage() {
       >
         <div className="flex flex-col items-center mb-6">
           <img src={ucuLogo} alt="UCU Logo" className="w-24 h-24 object-contain mb-4" />
-          <h2 className="text-2xl font-bold">
-            {isLogin ? 'Welcome back' : 'Create account'}
+          <h2 className="text-2xl font-bold text-center">
+            {isLogin ? 'SMART UNIVERSITY EVENT MANAGEMENT SYSTEM' : 'Create account'}
           </h2>
           <p className="text-muted-foreground text-sm">
             {isLogin 
