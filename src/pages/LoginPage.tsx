@@ -91,47 +91,13 @@ export default function LoginPage() {
         <img src={campusBg} alt="UCU Campus" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
         
-        <div className="relative z-10 flex flex-col justify-center px-16 text-white">
+        <div className="relative z-10 flex flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex flex-col items-start mb-8">
-              <img src={ucuLogo} alt="UCU Logo" className="w-72 h-72 object-contain mb-6" />
-              <div>
-                <h1 className="text-2xl font-bold">UCU Events</h1>
-                <p className="text-white/70 text-sm">Event Management System</p>
-              </div>
-            </div>
-            
-            <h2 className="text-4xl font-bold leading-tight mb-6">
-              Manage University Events<br />
-              <span className="text-white/80">Smarter & Faster</span>
-            </h2>
-            
-            <p className="text-lg text-white/70 max-w-md mb-8">
-              Plan, promote, and analyze academic and social events with our comprehensive management platform.
-            </p>
-
-            <div className="grid grid-cols-3 gap-6">
-              {[
-                { label: 'Events', value: '500+' },
-                { label: 'Students', value: '25K+' },
-                { label: 'Departments', value: '12' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2 + i * 0.1 }}
-                  className="text-center p-4 rounded-xl bg-white/10 backdrop-blur-sm"
-                >
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <div className="text-sm text-white/70">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
+            <img src={ucuLogo} alt="UCU Logo" className="w-72 h-72 object-contain" />
           </motion.div>
         </div>
       </div>
