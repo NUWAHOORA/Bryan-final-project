@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, Users, Shield, BookOpen } from 'lucide-react';
 import ucuLogo from '@/assets/ucu-logo.png';
+import campusBg from '@/assets/campus-bg.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,11 +87,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 gradient-hero relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-primary rounded-full blur-3xl" />
-        </div>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <img src={campusBg} alt="UCU Campus" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
         
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <motion.div
