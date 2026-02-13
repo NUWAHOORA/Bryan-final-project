@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import ucuLogoFull from '@/assets/ucu-logo-full.png';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useUnreadNotificationCount } from '@/hooks/useNotifications';
@@ -82,10 +83,8 @@ export function Sidebar() {
       className="fixed left-0 top-0 h-screen bg-sidebar z-50 flex flex-col border-r border-sidebar-border"
     >
       {/* Header */}
-      <div className="p-6 flex items-center gap-3 border-b border-sidebar-border">
-        <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
-          <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
-        </div>
+      <div className="p-4 flex items-center gap-3 border-b border-sidebar-border">
+        <img src={ucuLogoFull} alt="UCU Logo" className={cn("object-contain flex-shrink-0", collapsed ? "w-10 h-10" : "h-12")} />
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -93,10 +92,7 @@ export function Sidebar() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               className="flex-1 overflow-hidden"
-            >
-              <h1 className="font-semibold text-sidebar-foreground truncate">UniEvents</h1>
-              <p className="text-xs text-sidebar-foreground/60 truncate">Event Management</p>
-            </motion.div>
+            />
           )}
         </AnimatePresence>
         <Button
