@@ -167,7 +167,7 @@ export function MeetingCard({
                 className="flex-1"
               >
                 <ExternalLink className="w-4 h-4 mr-1" />
-                Join Meeting
+                {canManage ? 'Start Meeting' : 'Join Meeting'}
               </Button>
 
               {participantStatus === 'invited' && (
