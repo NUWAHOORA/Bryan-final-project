@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
-  ScanLine, 
   CheckCircle, 
   XCircle, 
   Users, 
   Clock,
-  Camera
+  Loader2
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -19,34 +18,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { mockEvents } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { useEvents } from '@/hooks/useEvents';
+import { useEventRegistrations, useMarkAttendance } from '@/hooks/useRegistrations';
+import { QrScanner } from '@/components/attendance/QrScanner';
 
 export default function AttendancePage() {
   const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState('');
   const [manualCode, setManualCode] = useState('');
-  const [recentScans, setRecentScans] = useState<{ name: string; time: string; success: boolean }[]>([
-    { name: 'Alex Rivera', time: '2 min ago', success: true },
-    { name: 'Jordan Lee', time: '5 min ago', success: true },
-    { name: 'Sam Chen', time: '8 min ago', success: false },
-  ]);
+  const [recentScans, setRecentScans] = useState<{ name: string; time: string; success: boolean; message?: string }[]>([]);
 
-  const approvedEvents = mockEvents.filter(e => e.status === 'approved');
+  const { data: events, isLoading: eventsLoading } = useEvents();
+  const approvedEvents = events?.filter(e => e.status === 'approved') || [];
   const event = approvedEvents.find(e => e.id === selectedEvent);
 
-  const handleManualCheckIn = () => {
-    if (!manualCode) return;
+  const { data: registrations } = useEventRegistrations(selectedEvent);
+  const markAttendance = useMarkAttendance();
+
+  const checkedInCount = registrations?.filter(r => r.attended).length || 0;
+  const totalRegistered = registrations?.length || 0;
+
+  const processQrCode = (code: string) => {
+    // Expected format: ticket:{event_id}:{user_id}:{registration_id}
+    const parts = code.split(':');
     
-    toast({
-      title: "Check-in successful",
-      description: "Attendee has been checked in.",
-    });
-    
+    if (parts.length < 4 || parts[0] !== 'ticket') {
+      addScan('Unknown', false, 'Invalid QR code format');
+      toast({ title: 'Invalid QR code', description: 'This is not a valid ticket QR code.', variant: 'destructive' });
+      return;
+    }
+
+    const [, ticketEventId, , registrationId] = parts;
+
+    if (ticketEventId !== selectedEvent) {
+      addScan('Wrong event', false, 'QR code is for a different event');
+      toast({ title: 'Wrong event', description: 'This ticket is for a different event.', variant: 'destructive' });
+      return;
+    }
+
+    const registration = registrations?.find(r => r.id === registrationId);
+    if (!registration) {
+      addScan('Unknown attendee', false, 'Registration not found');
+      toast({ title: 'Not registered', description: 'This attendee is not registered for this event.', variant: 'destructive' });
+      return;
+    }
+
+    if (registration.attended) {
+      const userName = registration.user?.name || 'Attendee';
+      addScan(userName, false, 'Already checked in');
+      toast({ title: 'Already checked in', description: `${userName} was already checked in.` });
+      return;
+    }
+
+    const userName = registration.user?.name || 'Attendee';
+    markAttendance.mutate(
+      { registrationId, attended: true },
+      {
+        onSuccess: () => {
+          addScan(userName, true, 'Checked in successfully');
+        },
+        onError: () => {
+          addScan(userName, false, 'Check-in failed');
+        }
+      }
+    );
+  };
+
+  const addScan = (name: string, success: boolean, message?: string) => {
     setRecentScans(prev => [
-      { name: `Attendee #${manualCode}`, time: 'Just now', success: true },
-      ...prev.slice(0, 9)
+      { name, time: 'Just now', success, message },
+      ...prev.slice(0, 19)
     ]);
+  };
+
+  const handleManualCheckIn = () => {
+    if (!manualCode.trim()) return;
+    processQrCode(manualCode.trim());
     setManualCode('');
   };
 
@@ -83,18 +131,24 @@ export default function AttendancePage() {
             {/* Event Selection */}
             <div className="bg-card rounded-2xl border border-border p-6">
               <h3 className="text-lg font-semibold mb-4">Select Event</h3>
-              <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Choose an event to scan for" />
-                </SelectTrigger>
-                <SelectContent>
-                  {approvedEvents.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {eventsLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Loading events...
+                </div>
+              ) : (
+                <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Choose an event to scan for" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {approvedEvents.map((evt) => (
+                      <SelectItem key={evt.id} value={evt.id}>
+                        {evt.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {selectedEvent && (
@@ -102,36 +156,35 @@ export default function AttendancePage() {
                 {/* Scanner Area */}
                 <div className="bg-card rounded-2xl border border-border p-6">
                   <h3 className="text-lg font-semibold mb-4">QR Scanner</h3>
-                  <div className="aspect-video bg-muted rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-4 border-2 border-dashed border-primary/30 rounded-lg" />
-                    <Camera className="w-16 h-16 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground text-center">
-                      Camera scanner would be active here<br />
-                      <span className="text-sm">Scan attendee QR codes</span>
-                    </p>
-                  </div>
+                  <QrScanner onScan={processQrCode} enabled={!!selectedEvent} />
 
                   <div className="mt-6">
-                    <p className="text-sm text-muted-foreground mb-2">Or enter ticket code manually:</p>
+                    <p className="text-sm text-muted-foreground mb-2">Or paste/enter the full ticket code manually:</p>
                     <div className="flex gap-3">
                       <Input
-                        placeholder="Enter ticket code"
+                        placeholder="e.g. ticket:event-id:user-id:reg-id"
                         value={manualCode}
                         onChange={(e) => setManualCode(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleManualCheckIn()}
                         className="h-11"
                       />
                       <Button 
                         onClick={handleManualCheckIn}
                         className="gradient-primary text-white"
+                        disabled={markAttendance.isPending}
                       >
-                        <CheckCircle className="w-4 h-4 mr-2" />
+                        {markAttendance.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                        )}
                         Check In
                       </Button>
                     </div>
                   </div>
                 </div>
 
-                {/* Event QR Code */}
+                {/* Event QR Code for self check-in */}
                 <div className="bg-card rounded-2xl border border-border p-6">
                   <h3 className="text-lg font-semibold mb-4">Event Check-in QR</h3>
                   <p className="text-muted-foreground text-sm mb-4">
@@ -157,7 +210,7 @@ export default function AttendancePage() {
             transition={{ delay: 0.3 }}
             className="space-y-6"
           >
-            {event && (
+            {selectedEvent && (
               <div className="bg-card rounded-2xl border border-border p-6">
                 <h3 className="text-lg font-semibold mb-4">Event Stats</h3>
                 <div className="space-y-4">
@@ -166,51 +219,66 @@ export default function AttendancePage() {
                       <Users className="w-4 h-4" />
                       Registered
                     </span>
-                    <span className="font-semibold">{event.registeredCount}</span>
+                    <span className="font-semibold">{totalRegistered}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-2">
                       <CheckCircle className="w-4 h-4" />
                       Checked In
                     </span>
-                    <span className="font-semibold text-success">{event.attendedCount}</span>
+                    <span className="font-semibold text-success">{checkedInCount}</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full bg-success transition-all"
-                      style={{ width: `${(event.attendedCount / event.registeredCount) * 100}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center">
-                    {Math.round((event.attendedCount / event.registeredCount) * 100)}% check-in rate
-                  </p>
+                  {totalRegistered > 0 && (
+                    <>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div 
+                          className="h-2 rounded-full bg-success transition-all"
+                          style={{ width: `${(checkedInCount / totalRegistered) * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground text-center">
+                        {Math.round((checkedInCount / totalRegistered) * 100)}% check-in rate
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             )}
 
             <div className="bg-card rounded-2xl border border-border p-6">
               <h3 className="text-lg font-semibold mb-4">Recent Scans</h3>
-              <div className="space-y-3">
-                {recentScans.map((scan, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      {scan.success ? (
-                        <CheckCircle className="w-5 h-5 text-success" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-destructive" />
-                      )}
-                      <span className="font-medium">{scan.name}</span>
+              {recentScans.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No scans yet. Start scanning to see results here.
+                </p>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {recentScans.map((scan, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {scan.success ? (
+                          <CheckCircle className="w-5 h-5 text-success shrink-0" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-destructive shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <span className="font-medium block truncate">{scan.name}</span>
+                          {scan.message && (
+                            <span className="text-xs text-muted-foreground">{scan.message}</span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1 shrink-0">
+                        <Clock className="w-3 h-3" />
+                        {scan.time}
+                      </span>
                     </div>
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {scan.time}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
