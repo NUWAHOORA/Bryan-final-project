@@ -40,16 +40,30 @@ export default function AttendancePage() {
   const totalRegistered = registrations?.length || 0;
 
   const processQrCode = (code: string) => {
-    // Expected format: ticket:{event_id}:{user_id}:{registration_id}
-    const parts = code.split(':');
-    
-    if (parts.length < 4 || parts[0] !== 'ticket') {
+    let ticketEventId: string | null = null;
+    let registrationId: string | null = null;
+
+    // Handle URL format: .../checkin?event=...&user=...&reg=...
+    try {
+      const url = new URL(code);
+      if (url.pathname.includes('checkin')) {
+        ticketEventId = url.searchParams.get('event');
+        registrationId = url.searchParams.get('reg');
+      }
+    } catch {
+      // Not a URL — try legacy ticket:... format
+      const parts = code.split(':');
+      if (parts.length >= 4 && parts[0] === 'ticket') {
+        ticketEventId = parts[1];
+        registrationId = parts[3];
+      }
+    }
+
+    if (!ticketEventId || !registrationId) {
       addScan('Unknown', false, 'Invalid QR code format');
       toast({ title: 'Invalid QR code', description: 'This is not a valid ticket QR code.', variant: 'destructive' });
       return;
     }
-
-    const [, ticketEventId, , registrationId] = parts;
 
     if (ticketEventId !== selectedEvent) {
       addScan('Wrong event', false, 'QR code is for a different event');

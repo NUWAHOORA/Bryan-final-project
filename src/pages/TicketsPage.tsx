@@ -77,7 +77,7 @@ export default function TicketsPage() {
 
                 <div className="flex justify-center p-4 bg-white rounded-xl mb-4">
                   <QRCodeSVG
-                     value={`ticket:${registration.event_id}:${user?.id}:${registration.id}`}
+                     value={`${window.location.origin}/checkin?event=${registration.event_id}&user=${user?.id}&reg=${registration.id}`}
                     size={150}
                     level="H"
                     includeMargin
