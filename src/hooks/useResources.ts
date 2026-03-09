@@ -326,9 +326,9 @@ export function useResourceAuditLog(eventId?: string) {
           : { data: [] },
       ]);
 
-      const rtMap = new Map(resourceTypesRes.data?.map(r => [r.id, r.name]) || []);
-      const evMap = new Map(eventsRes.data?.map(e => [e.id, e.title]) || []);
-      const pfMap = new Map(profilesRes.data?.map(p => [p.user_id, p.name]) || []);
+      const rtMap = new Map<string, string>(resourceTypesRes.data?.map(r => [r.id, r.name] as [string, string]) || []);
+      const evMap = new Map<string, string>(eventsRes.data?.map(e => [e.id, e.title] as [string, string]) || []);
+      const pfMap = new Map<string, string>(profilesRes.data?.map(p => [p.user_id, p.name] as [string, string]) || []);
 
       return data?.map(entry => ({
         ...entry,
