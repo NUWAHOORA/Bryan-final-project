@@ -20,7 +20,29 @@ export interface EventResource {
   allocated_by: string;
   allocated_at: string;
   notes: string | null;
+  returned: boolean;
+  returned_at: string | null;
+  returned_quantity: number;
+  condition: string;
+  return_confirmed_by: string | null;
   resource_type?: ResourceType;
+}
+
+export type ResourceCondition = 'good' | 'damaged' | 'needs_repair' | 'lost';
+
+export interface AuditLogEntry {
+  id: string;
+  event_id: string;
+  resource_type_id: string;
+  action: string;
+  quantity: number;
+  condition: string | null;
+  performed_by: string;
+  notes: string | null;
+  created_at: string;
+  resource_type_name?: string;
+  event_title?: string;
+  performer_name?: string;
 }
 
 export function useResourceTypes() {
@@ -31,7 +53,6 @@ export function useResourceTypes() {
         .from('resource_types')
         .select('*')
         .order('name');
-
       if (error) throw error;
       return data as ResourceType[];
     },
@@ -46,10 +67,8 @@ export function useEventResources(eventId: string) {
         .from('event_resources')
         .select('*')
         .eq('event_id', eventId);
-
       if (error) throw error;
 
-      // Fetch resource type details
       const resourceTypeIds = allocations?.map(a => a.resource_type_id) || [];
       if (resourceTypeIds.length === 0) return [];
 
@@ -88,7 +107,6 @@ export function useAllocateResource() {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
-      // Check available quantity
       const { data: resource, error: resourceError } = await supabase
         .from('resource_types')
         .select('available_quantity, name')
@@ -100,7 +118,6 @@ export function useAllocateResource() {
         throw new Error(`Only ${resource.available_quantity} ${resource.name} available`);
       }
 
-      // Allocate resource
       const { error: allocError } = await supabase
         .from('event_resources')
         .upsert({
@@ -112,39 +129,39 @@ export function useAllocateResource() {
         }, {
           onConflict: 'event_id,resource_type_id'
         });
-
       if (allocError) throw allocError;
 
-      // Update available quantity
       const { error: updateError } = await supabase
         .from('resource_types')
-        .update({ 
-          available_quantity: resource.available_quantity - quantity 
-        })
+        .update({ available_quantity: resource.available_quantity - quantity })
         .eq('id', resourceTypeId);
-
       if (updateError) throw updateError;
+
+      // Audit log
+      await supabase.from('resource_audit_log').insert({
+        event_id: eventId,
+        resource_type_id: resourceTypeId,
+        action: 'allocated',
+        quantity,
+        performed_by: user.id,
+        notes,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-resources'] });
       queryClient.invalidateQueries({ queryKey: ['resource-types'] });
-      toast({
-        title: 'Resource allocated',
-        description: 'The resource has been allocated to this event.',
-      });
+      queryClient.invalidateQueries({ queryKey: ['resource-audit-log'] });
+      toast({ title: 'Resource allocated', description: 'The resource has been allocated to this event.' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error allocating resource',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error allocating resource', description: error.message, variant: 'destructive' });
     },
   });
 }
 
 export function useDeallocateResource() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   return useMutation({
@@ -152,51 +169,173 @@ export function useDeallocateResource() {
       allocationId,
       resourceTypeId,
       quantity,
+      eventId,
     }: {
       allocationId: string;
       resourceTypeId: string;
       quantity: number;
+      eventId: string;
     }) => {
-      // Delete allocation
       const { error: deleteError } = await supabase
         .from('event_resources')
         .delete()
         .eq('id', allocationId);
-
       if (deleteError) throw deleteError;
 
-      // Restore available quantity
       const { data: resource, error: resourceError } = await supabase
         .from('resource_types')
         .select('available_quantity')
         .eq('id', resourceTypeId)
         .single();
-
       if (resourceError) throw resourceError;
 
       const { error: updateError } = await supabase
         .from('resource_types')
-        .update({ 
-          available_quantity: resource.available_quantity + quantity 
-        })
+        .update({ available_quantity: resource.available_quantity + quantity })
         .eq('id', resourceTypeId);
-
       if (updateError) throw updateError;
+
+      if (user) {
+        await supabase.from('resource_audit_log').insert({
+          event_id: eventId,
+          resource_type_id: resourceTypeId,
+          action: 'deallocated',
+          quantity,
+          performed_by: user.id,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-resources'] });
       queryClient.invalidateQueries({ queryKey: ['resource-types'] });
-      toast({
-        title: 'Resource deallocated',
-        description: 'The resource has been returned to inventory.',
-      });
+      queryClient.invalidateQueries({ queryKey: ['resource-audit-log'] });
+      toast({ title: 'Resource deallocated', description: 'The resource has been returned to inventory.' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error deallocating resource',
-        description: error.message,
-        variant: 'destructive',
+      toast({ title: 'Error deallocating resource', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useReturnResource() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      allocationId,
+      resourceTypeId,
+      returnedQuantity,
+      condition,
+      eventId,
+      notes,
+    }: {
+      allocationId: string;
+      resourceTypeId: string;
+      returnedQuantity: number;
+      condition: ResourceCondition;
+      eventId: string;
+      notes?: string;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Update the allocation record
+      const { error: updateAllocError } = await supabase
+        .from('event_resources')
+        .update({
+          returned: true,
+          returned_at: new Date().toISOString(),
+          returned_quantity: returnedQuantity,
+          condition,
+          return_confirmed_by: user.id,
+        })
+        .eq('id', allocationId);
+      if (updateAllocError) throw updateAllocError;
+
+      // Only return good-condition items to stock
+      const goodQuantity = condition === 'good' ? returnedQuantity : 0;
+      if (goodQuantity > 0) {
+        const { data: resource, error: resourceError } = await supabase
+          .from('resource_types')
+          .select('available_quantity')
+          .eq('id', resourceTypeId)
+          .single();
+        if (resourceError) throw resourceError;
+
+        const { error: updateError } = await supabase
+          .from('resource_types')
+          .update({ available_quantity: resource.available_quantity + goodQuantity })
+          .eq('id', resourceTypeId);
+        if (updateError) throw updateError;
+      }
+
+      // Audit log
+      await supabase.from('resource_audit_log').insert({
+        event_id: eventId,
+        resource_type_id: resourceTypeId,
+        action: 'returned',
+        quantity: returnedQuantity,
+        condition,
+        performed_by: user.id,
+        notes,
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event-resources'] });
+      queryClient.invalidateQueries({ queryKey: ['resource-types'] });
+      queryClient.invalidateQueries({ queryKey: ['resource-audit-log'] });
+      toast({ title: 'Resource return recorded', description: 'The resource return has been processed.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error recording return', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useResourceAuditLog(eventId?: string) {
+  return useQuery({
+    queryKey: ['resource-audit-log', eventId],
+    queryFn: async () => {
+      let query = supabase
+        .from('resource_audit_log')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (eventId) {
+        query = query.eq('event_id', eventId);
+      }
+
+      const { data, error } = await query.limit(100);
+      if (error) throw error;
+
+      // Enrich with resource type names and event titles
+      const resourceTypeIds = [...new Set(data?.map(d => d.resource_type_id) || [])];
+      const eventIds = [...new Set(data?.map(d => d.event_id) || [])];
+      const performerIds = [...new Set(data?.map(d => d.performed_by) || [])];
+
+      const [resourceTypesRes, eventsRes, profilesRes] = await Promise.all([
+        resourceTypeIds.length > 0
+          ? supabase.from('resource_types').select('id, name').in('id', resourceTypeIds)
+          : { data: [] },
+        eventIds.length > 0
+          ? supabase.from('events').select('id, title').in('id', eventIds)
+          : { data: [] },
+        performerIds.length > 0
+          ? supabase.from('profiles').select('user_id, name').in('user_id', performerIds)
+          : { data: [] },
+      ]);
+
+      const rtMap = new Map(resourceTypesRes.data?.map(r => [r.id, r.name]) || []);
+      const evMap = new Map(eventsRes.data?.map(e => [e.id, e.title]) || []);
+      const pfMap = new Map(profilesRes.data?.map(p => [p.user_id, p.name]) || []);
+
+      return data?.map(entry => ({
+        ...entry,
+        resource_type_name: rtMap.get(entry.resource_type_id) || 'Unknown',
+        event_title: evMap.get(entry.event_id) || 'Unknown',
+        performer_name: pfMap.get(entry.performed_by) || 'Unknown',
+      })) as AuditLogEntry[];
     },
   });
 }
@@ -217,22 +356,14 @@ export function useCreateResourceType() {
           ...data,
           available_quantity: data.total_quantity,
         });
-
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resource-types'] });
-      toast({
-        title: 'Resource type created',
-        description: 'New resource type has been added.',
-      });
+      toast({ title: 'Resource type created', description: 'New resource type has been added.' });
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error creating resource type',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error creating resource type', description: error.message, variant: 'destructive' });
     },
   });
 }
