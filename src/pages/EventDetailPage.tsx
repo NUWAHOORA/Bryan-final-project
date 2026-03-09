@@ -44,6 +44,10 @@ export default function EventDetailPage() {
    const cancelMutation = useCancelRegistration();
   const [showQRModal, setShowQRModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [showAllocateDialog, setShowAllocateDialog] = useState(false);
+
+  const isPastEvent = event ? new Date(event.date) < new Date() : false;
 
   if (isLoading) {
     return (
