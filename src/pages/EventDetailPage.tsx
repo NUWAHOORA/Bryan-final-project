@@ -3,18 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  ArrowLeft, 
-  Share2, 
-  Heart,
-  CheckCircle,
-  User,
-  Ticket,
-  Edit,
-  Loader2
+  Calendar, Clock, MapPin, Users, ArrowLeft, Share2, Heart,
+  CheckCircle, User, Ticket, Edit, Loader2, Package, RotateCcw
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -24,14 +14,15 @@ import { useEvent } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { EditEventDialog } from '@/components/events/EditEventDialog';
 import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
- import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { EventResourceSummary } from '@/components/resources/EventResourceSummary';
+import { ResourceReturnDialog } from '@/components/resources/ResourceReturnDialog';
+import { ResourceAllocationDialog } from '@/components/resources/ResourceAllocationDialog';
+import { ResourceAuditLog } from '@/components/resources/ResourceAuditLog';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
