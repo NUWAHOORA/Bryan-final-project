@@ -398,6 +398,26 @@ export default function EventDetailPage() {
             }}
           />
         )}
+
+        {/* Resource Allocation Dialog */}
+        {showAllocateDialog && (
+          <ResourceAllocationDialog
+            open={showAllocateDialog}
+            onOpenChange={setShowAllocateDialog}
+            eventId={event.id}
+            eventTitle={event.title}
+          />
+        )}
+
+        {/* Resource Return Dialog */}
+        {showReturnDialog && (
+          <ResourceReturnDialog
+            open={showReturnDialog}
+            onOpenChange={setShowReturnDialog}
+            eventId={event.id}
+            eventTitle={event.title}
+          />
+        )}
       </div>
     </MainLayout>
   );
