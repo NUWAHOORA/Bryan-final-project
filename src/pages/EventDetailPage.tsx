@@ -194,6 +194,42 @@ export default function EventDetailPage() {
                 isOrganizer={isOwner}
               />
             )}
+
+            {/* Resource Summary & Management */}
+            {(role === 'admin' || role === 'organizer') && (
+              <div className="bg-card rounded-2xl border border-border overflow-hidden mt-6">
+                <div className="h-1 bg-gradient-to-r from-primary/50 to-primary/20" />
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <Package className="w-5 h-5 text-primary" />
+                      Event Resources
+                    </h2>
+                    <div className="flex gap-2">
+                      {role === 'admin' && (
+                        <Button variant="outline" size="sm" onClick={() => setShowAllocateDialog(true)}>
+                          <Package className="w-4 h-4 mr-2" />
+                          Allocate
+                        </Button>
+                      )}
+                      {role === 'admin' && isPastEvent && (
+                        <Button variant="outline" size="sm" onClick={() => setShowReturnDialog(true)}>
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Record Returns
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <EventResourceSummary eventId={event.id} />
+                  
+                  {/* Event-specific audit log */}
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Resource Activity Log</h3>
+                    <ResourceAuditLog eventId={event.id} />
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Sidebar */}
