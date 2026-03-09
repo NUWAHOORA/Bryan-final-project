@@ -3,18 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  ArrowLeft, 
-  Share2, 
-  Heart,
-  CheckCircle,
-  User,
-  Ticket,
-  Edit,
-  Loader2
+  Calendar, Clock, MapPin, Users, ArrowLeft, Share2, Heart,
+  CheckCircle, User, Ticket, Edit, Loader2, Package, RotateCcw
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -24,14 +14,15 @@ import { useEvent } from '@/hooks/useEvents';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { EditEventDialog } from '@/components/events/EditEventDialog';
 import { EventMeetingsSection } from '@/components/meetings/EventMeetingsSection';
- import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { useIsRegistered, useRegisterForEvent, useCancelRegistration } from '@/hooks/useRegistrations';
+import { EventResourceSummary } from '@/components/resources/EventResourceSummary';
+import { ResourceReturnDialog } from '@/components/resources/ResourceReturnDialog';
+import { ResourceAllocationDialog } from '@/components/resources/ResourceAllocationDialog';
+import { ResourceAuditLog } from '@/components/resources/ResourceAuditLog';
 
 const categoryColors: Record<string, string> = {
   academic: 'bg-blue-100 text-blue-700',
@@ -53,6 +44,10 @@ export default function EventDetailPage() {
    const cancelMutation = useCancelRegistration();
   const [showQRModal, setShowQRModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showReturnDialog, setShowReturnDialog] = useState(false);
+  const [showAllocateDialog, setShowAllocateDialog] = useState(false);
+
+  const isPastEvent = event ? new Date(event.date) < new Date() : false;
 
   if (isLoading) {
     return (
@@ -198,6 +193,42 @@ export default function EventDetailPage() {
                 eventTitle={event.title}
                 isOrganizer={isOwner}
               />
+            )}
+
+            {/* Resource Summary & Management */}
+            {(role === 'admin' || role === 'organizer') && (
+              <div className="bg-card rounded-2xl border border-border overflow-hidden mt-6">
+                <div className="h-1 bg-gradient-to-r from-primary/50 to-primary/20" />
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <Package className="w-5 h-5 text-primary" />
+                      Event Resources
+                    </h2>
+                    <div className="flex gap-2">
+                      {role === 'admin' && (
+                        <Button variant="outline" size="sm" onClick={() => setShowAllocateDialog(true)}>
+                          <Package className="w-4 h-4 mr-2" />
+                          Allocate
+                        </Button>
+                      )}
+                      {role === 'admin' && isPastEvent && (
+                        <Button variant="outline" size="sm" onClick={() => setShowReturnDialog(true)}>
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Record Returns
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <EventResourceSummary eventId={event.id} />
+                  
+                  {/* Event-specific audit log */}
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Resource Activity Log</h3>
+                    <ResourceAuditLog eventId={event.id} />
+                  </div>
+                </div>
+              </div>
             )}
           </motion.div>
 
@@ -365,6 +396,26 @@ export default function EventDetailPage() {
               category: event.category,
               capacity: event.capacity,
             }}
+          />
+        )}
+
+        {/* Resource Allocation Dialog */}
+        {showAllocateDialog && (
+          <ResourceAllocationDialog
+            open={showAllocateDialog}
+            onOpenChange={setShowAllocateDialog}
+            eventId={event.id}
+            eventTitle={event.title}
+          />
+        )}
+
+        {/* Resource Return Dialog */}
+        {showReturnDialog && (
+          <ResourceReturnDialog
+            open={showReturnDialog}
+            onOpenChange={setShowReturnDialog}
+            eventId={event.id}
+            eventTitle={event.title}
           />
         )}
       </div>

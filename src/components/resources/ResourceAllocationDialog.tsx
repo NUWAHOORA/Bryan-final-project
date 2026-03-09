@@ -93,6 +93,7 @@ export function ResourceAllocationDialog({
       allocationId: allocation.id,
       resourceTypeId,
       quantity: allocation.quantity,
+      eventId,
     });
   };
 
