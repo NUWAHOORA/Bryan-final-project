@@ -150,29 +150,44 @@ export type Database = {
         Row: {
           allocated_at: string
           allocated_by: string
+          condition: string | null
           event_id: string
           id: string
           notes: string | null
           quantity: number
           resource_type_id: string
+          return_confirmed_by: string | null
+          returned: boolean
+          returned_at: string | null
+          returned_quantity: number | null
         }
         Insert: {
           allocated_at?: string
           allocated_by: string
+          condition?: string | null
           event_id: string
           id?: string
           notes?: string | null
           quantity?: number
           resource_type_id: string
+          return_confirmed_by?: string | null
+          returned?: boolean
+          returned_at?: string | null
+          returned_quantity?: number | null
         }
         Update: {
           allocated_at?: string
           allocated_by?: string
+          condition?: string | null
           event_id?: string
           id?: string
           notes?: string | null
           quantity?: number
           resource_type_id?: string
+          return_confirmed_by?: string | null
+          returned?: boolean
+          returned_at?: string | null
+          returned_quantity?: number | null
         }
         Relationships: [
           {
@@ -447,6 +462,57 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_audit_log: {
+        Row: {
+          action: string
+          condition: string | null
+          created_at: string
+          event_id: string
+          id: string
+          notes: string | null
+          performed_by: string
+          quantity: number
+          resource_type_id: string
+        }
+        Insert: {
+          action: string
+          condition?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          performed_by: string
+          quantity: number
+          resource_type_id: string
+        }
+        Update: {
+          action?: string
+          condition?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          performed_by?: string
+          quantity?: number
+          resource_type_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_audit_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_audit_log_resource_type_id_fkey"
+            columns: ["resource_type_id"]
+            isOneToOne: false
+            referencedRelation: "resource_types"
             referencedColumns: ["id"]
           },
         ]
