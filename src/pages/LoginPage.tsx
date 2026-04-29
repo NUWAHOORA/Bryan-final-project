@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, Users, Shield, BookOpen } from 'lucide-react';
-import ucuLogo from '@/assets/ucu-logo.png';
+import appLogo from '@/assets/nb-logo.png';
 import campusBg from '@/assets/campus-bg.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,7 +98,7 @@ export default function LoginPage() {
         className="relative z-10 w-full max-w-md bg-background/90 backdrop-blur-xl rounded-2xl p-8 shadow-2xl"
       >
         <div className="flex flex-col items-center mb-6">
-          <img src={ucuLogo} alt="UCU Logo" className="w-24 h-24 object-contain mb-4" />
+          <img src={appLogo} alt="NB Technologies Logo" className="w-32 h-32 object-contain mb-4" />
           <h2 className="text-2xl font-bold text-center">
             {isLogin ? 'SMART UNIVERSITY EVENT MANAGEMENT SYSTEM' : 'Create account'}
           </h2>
