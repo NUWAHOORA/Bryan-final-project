@@ -87,15 +87,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 bg-background">
       {/* Split background images */}
-      <div className="absolute inset-0 flex w-full h-full overflow-hidden">
-        <div className="w-1/2 h-full">
-          <img src={posterBg} alt="Background Left" className="w-full h-full object-cover" />
+      <div className="absolute inset-0 flex w-full h-full overflow-hidden bg-black">
+        <div className="w-1/2 h-full flex items-center justify-center p-4">
+          <img src={posterBg} alt="Background Left" className="w-full h-full object-contain opacity-60" />
         </div>
-        <div className="w-1/2 h-full border-l border-white/5">
-          <img src={posterBg} alt="Background Right" className="w-full h-full object-cover" />
+        <div className="w-1/2 h-full border-l border-white/5 flex items-center justify-center p-4">
+          <img src={posterBg} alt="Background Right" className="w-full h-full object-contain opacity-60" />
         </div>
       </div>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40" />
 
       {/* Centered card */}
       <motion.div
