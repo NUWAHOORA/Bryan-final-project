@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Loader2, Eye, EyeOff, ArrowRight, Users, Shield, BookOpen } from 'lucide-react';
 import appLogo from '@/assets/nb-logo.png';
-import campusBg from '@/assets/campus-bg.jpg';
+import posterBg from '@/assets/poster-bg.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,10 +85,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4">
-      {/* Full-page background */}
-      <img src={campusBg} alt="UCU Campus" className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/60" />
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-background">
+      {/* Split background images */}
+      <div className="absolute inset-0 flex w-full h-full overflow-hidden">
+        <div className="w-1/2 h-full">
+          <img src={posterBg} alt="Background Left" className="w-full h-full object-cover" />
+        </div>
+        <div className="w-1/2 h-full border-l border-white/5">
+          <img src={posterBg} alt="Background Right" className="w-full h-full object-cover" />
+        </div>
+      </div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Centered card */}
       <motion.div
