@@ -21,6 +21,7 @@ import UsersPage from "./pages/UsersPage";
 import ResourcesPage from "./pages/ResourcesPage";
 import MeetingsPage from "./pages/MeetingsPage";
 import EmailSettingsPage from "./pages/EmailSettingsPage";
+import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/update-password" element={<UpdatePasswordPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/create" element={<CreateEventPage />} />

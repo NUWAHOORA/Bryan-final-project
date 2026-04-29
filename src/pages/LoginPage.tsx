@@ -30,13 +30,14 @@ const roles = [
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, isAuthenticated } = useAuth();
+  const { signIn, signUp, resetPassword, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,7 +51,20 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      if (isLogin) {
+      if (isForgotPassword) {
+        if (!email) {
+          toast.error('Please enter your email');
+          setIsLoading(false);
+          return;
+        }
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast.error(error.message || 'Failed to send reset link');
+        } else {
+          toast.success('Password reset link sent to your email!');
+          setIsForgotPassword(false);
+        }
+      } else if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
           toast.error(error.message || 'Failed to sign in');
@@ -107,17 +121,21 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-6">
           <img src={appLogo} alt="NB Technologies Logo" className="w-32 h-32 object-contain mb-4" />
           <h2 className="text-2xl font-bold text-center">
-            {isLogin ? 'SMART UNIVERSITY EVENT MANAGEMENT SYSTEM' : 'Create account'}
+            {isForgotPassword 
+              ? 'Reset Password' 
+              : isLogin ? 'SMART UNIVERSITY EVENT MANAGEMENT SYSTEM' : 'Create account'}
           </h2>
-          <p className="text-muted-foreground text-sm">
-            {isLogin 
-              ? 'Sign in to your account to continue'
-              : 'Sign up to get started with UCU Events'}
+          <p className="text-muted-foreground text-sm text-center">
+            {isForgotPassword
+              ? 'Enter your email to receive a password reset link'
+              : isLogin 
+                ? 'Sign in to your account to continue'
+                : 'Sign up to get started with UCU Events'}
           </p>
         </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
+            {!isLogin && !isForgotPassword && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -130,7 +148,7 @@ export default function LoginPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10 h-12"
-                      required={!isLogin}
+                      required={!isLogin && !isForgotPassword}
                     />
                   </div>
                 </div>
@@ -190,29 +208,42 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12"
-                  required
-                  minLength={6}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+            {!isForgotPassword && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(true)}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 pr-10 h-12"
+                    required={!isForgotPassword}
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <Button 
               type="submit" 
@@ -223,7 +254,7 @@ export default function LoginPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? 'Sign in' : 'Create Account'}
+                  {isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign in' : 'Create Account'}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
@@ -231,14 +262,29 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="ml-2 text-primary font-medium hover:underline"
-            >
-              {isLogin ? 'Sign Up' : 'Sign In'}
-            </button>
+            {isForgotPassword ? (
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(false)}
+                className="text-primary font-medium hover:underline"
+              >
+                Back to Sign In
+              </button>
+            ) : (
+              <>
+                {isLogin ? "Don't have an account?" : 'Already have an account?'}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setIsForgotPassword(false);
+                  }}
+                  className="ml-2 text-primary font-medium hover:underline"
+                >
+                  {isLogin ? 'Sign Up' : 'Sign In'}
+                </button>
+              </>
+            )}
           </p>
       </motion.div>
     </div>
