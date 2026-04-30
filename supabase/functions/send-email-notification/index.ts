@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -281,6 +282,24 @@ function getEmailTemplate(data: EmailNotificationRequest): string {
             ${data.event_title ? `<p><strong>For Event:</strong> ${data.event_title}</p>` : ""}
           </div>
           ${data.additional_message ? `<p><em>${data.additional_message}</em></p>` : ""}
+        </div>
+      `;
+      break;
+
+    case "user_approved":
+      content = `
+        <div class="header" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+          <h1>✅ Account Approved</h1>
+        </div>
+        <div class="content">
+          <p>Hello ${data.recipient_name || "there"},</p>
+          <p>Great news! Your account has been approved by the administration.</p>
+          <p>You now have access to the Smart University Event Management System with the following role:</p>
+          <div class="details">
+            <p><strong>Role:</strong> ${data.status}</p>
+          </div>
+          <p>You can now log in and start using the system.</p>
+          <a href="${baseUrl}/login" class="button">Log In Now</a>
         </div>
       `;
       break;

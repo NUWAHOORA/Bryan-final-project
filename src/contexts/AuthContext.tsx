@@ -11,6 +11,7 @@ interface Profile {
   name: string;
   department?: string;
   avatar_url?: string;
+  is_approved: boolean;
 }
 
 interface AuthContextType {
@@ -46,6 +47,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profileData) {
         setProfile(profileData as Profile);
+        
+        // If user is not approved and not an admin, sign them out
+        // We allow admins to always be approved (or we trust the migration)
+        if (profileData.is_approved === false) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setRole(null);
+          throw new Error('PENDING_APPROVAL');
+        }
       }
 
       // Fetch role

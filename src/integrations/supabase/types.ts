@@ -408,6 +408,7 @@ export type Database = {
           name: string
           updated_at: string
           user_id: string
+          is_approved: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -418,6 +419,7 @@ export type Database = {
           name: string
           updated_at?: string
           user_id: string
+          is_approved?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -428,6 +430,7 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+          is_approved?: boolean
         }
         Relationships: []
       }

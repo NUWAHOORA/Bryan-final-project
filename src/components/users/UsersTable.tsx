@@ -1,4 +1,4 @@
-import { MoreHorizontal, Shield, GraduationCap, Briefcase, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Shield, GraduationCap, Briefcase, Trash2, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserWithRole } from '@/hooks/useUsers';
+import { UserWithRole, useApproveUser } from '@/hooks/useUsers';
 
 const roleIcons = {
   admin: Shield,
@@ -38,6 +38,8 @@ interface UsersTableProps {
 }
 
 export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: UsersTableProps) {
+  const { mutate: approveUser, isPending: isApproving } = useApproveUser();
+
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <Table>
@@ -47,6 +49,7 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: User
             <TableHead>Role</TableHead>
             <TableHead className="hidden md:table-cell">Department</TableHead>
             <TableHead className="hidden lg:table-cell">Joined</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -95,6 +98,17 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: User
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
+                    {user.is_approved ? (
+                      <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+                        <CheckCircle className="w-3 h-3 mr-1" /> Approved
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-yellow-600 border-yellow-200 bg-yellow-50">
+                        <Clock className="w-3 h-3 mr-1" /> Pending
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {isAdmin && !isCurrentUser && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -103,6 +117,16 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: User
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {!user.is_approved && (
+                            <DropdownMenuItem 
+                              className="text-green-600 focus:text-green-600"
+                              onClick={() => approveUser(user)}
+                              disabled={isApproving}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve User
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem>View Details</DropdownMenuItem>
                           <DropdownMenuItem>Edit User</DropdownMenuItem>
                           <DropdownMenuItem 

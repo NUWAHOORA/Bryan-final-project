@@ -91,8 +91,14 @@ export default function LoginPage() {
           navigate('/dashboard');
         }
       }
-    } catch (error) {
-      toast.error('An unexpected error occurred');
+    } catch (error: any) {
+      if (error.message === 'PENDING_APPROVAL') {
+        toast.error('Your account is pending admin approval. You will receive an email once approved.', {
+          duration: 5000,
+        });
+      } else {
+        toast.error('An unexpected error occurred');
+      }
     } finally {
       setIsLoading(false);
     }

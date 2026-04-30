@@ -11,6 +11,7 @@ export interface UserWithRole {
   avatar_url: string | null;
   created_at: string;
   role: 'admin' | 'organizer' | 'student';
+  is_approved: boolean;
 }
 
 export function useUsers() {
@@ -43,7 +44,8 @@ export function useUsers() {
         department: profile.department,
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
-        role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'student') || 'student'
+        role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'student') || 'student',
+        is_approved: profile.is_approved
       }));
     }
   });
@@ -126,6 +128,46 @@ export function useDeleteUser() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete user');
+    }
+  });
+}
+
+export function useApproveUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: UserWithRole) => {
+      // 1. Update is_approved in profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ is_approved: true })
+        .eq('user_id', user.user_id);
+
+      if (profileError) throw profileError;
+
+      // 2. Trigger email notification via edge function
+      const { error: functionError } = await supabase.functions.invoke('send-email-notification', {
+        body: {
+          notification_type: 'user_approved',
+          recipient_email: user.email,
+          recipient_user_id: user.user_id,
+          recipient_name: user.name,
+          subject: 'Account Approved - Smart University Event Management System',
+          status: user.role, // Pass the role so it can be shown in the email
+        }
+      });
+
+      if (functionError) {
+        console.error('Error sending approval email:', functionError);
+        // We don't throw here because the user is already approved in the DB
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User approved successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to approve user');
     }
   });
 }
