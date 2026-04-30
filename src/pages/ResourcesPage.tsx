@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
+  Package, Plus, Settings, Monitor, Music, Armchair, Presentation, Mic, Speaker, 
   ClipboardList, Box, Loader2, FileText, RotateCcw, ArrowUpRight
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
