@@ -367,3 +367,43 @@ export function useCreateResourceType() {
     },
   });
 }
+
+export function useAllAllocations() {
+  return useQuery({
+    queryKey: ['all-resource-allocations'],
+    queryFn: async () => {
+      const { data: allocations, error } = await supabase
+        .from('event_resources')
+        .select('*')
+        .order('allocated_at', { ascending: false });
+      if (error) throw error;
+
+      if (!allocations || allocations.length === 0) return [];
+
+      const resourceTypeIds = [...new Set(allocations.map(a => a.resource_type_id))];
+      const eventIds = [...new Set(allocations.map(a => a.event_id))];
+      const userIds = [...new Set([
+        ...allocations.map(a => a.allocated_by),
+        ...allocations.filter(a => a.return_confirmed_by).map(a => a.return_confirmed_by as string)
+      ])];
+
+      const [resourceTypesRes, eventsRes, profilesRes] = await Promise.all([
+        supabase.from('resource_types').select('*').in('id', resourceTypeIds),
+        supabase.from('events').select('id, title').in('id', eventIds),
+        supabase.from('profiles').select('user_id, name').in('user_id', userIds),
+      ]);
+
+      const rtMap = new Map(resourceTypesRes.data?.map(r => [r.id, r]) || []);
+      const evMap = new Map(eventsRes.data?.map(e => [e.id, e.title]) || []);
+      const pfMap = new Map(profilesRes.data?.map(p => [p.user_id, p.name]) || []);
+
+      return allocations.map(allocation => ({
+        ...allocation,
+        resource_type: rtMap.get(allocation.resource_type_id),
+        event_title: evMap.get(allocation.event_id) || 'Unknown Event',
+        allocated_by_name: pfMap.get(allocation.allocated_by) || 'Unknown',
+        return_confirmed_by_name: allocation.return_confirmed_by ? pfMap.get(allocation.return_confirmed_by) : null
+      }));
+    },
+  });
+}

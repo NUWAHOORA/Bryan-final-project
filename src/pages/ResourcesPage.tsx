@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Package, Plus, Settings, Monitor, Music, Armchair, Presentation, Mic, Speaker, 
-  ClipboardList, Box, Loader2, FileText, RotateCcw
+  ClipboardList, Box, Loader2, FileText, RotateCcw, ArrowUpRight
 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -14,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger 
 } from '@/components/ui/dialog';
-import { useResourceTypes, useCreateResourceType } from '@/hooks/useResources';
+import { useResourceTypes, useCreateResourceType, useAllAllocations } from '@/hooks/useResources';
 import { ResourceAuditLog } from '@/components/resources/ResourceAuditLog';
+import { ResourceReturnDialog } from '@/components/resources/ResourceReturnDialog';
 
 const resourceIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   'Chairs': Armchair, 'Computers': Monitor, 'Music Instruments': Music,
@@ -25,8 +25,11 @@ const resourceIcons: Record<string, React.ComponentType<{ className?: string }>>
 
 export default function ResourcesPage() {
   const { data: resources, isLoading } = useResourceTypes();
+  const { data: allAllocations, isLoading: loadingAllocations } = useAllAllocations();
   const createMutation = useCreateResourceType();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedAllocation, setSelectedAllocation] = useState<{ id: string, eventId: string, eventTitle: string } | null>(null);
   const [newResource, setNewResource] = useState({ name: '', description: '', total_quantity: 0 });
 
   const getIcon = (name: string) => resourceIcons[name] || Package;
@@ -91,6 +94,10 @@ export default function ResourcesPage() {
             <TabsTrigger value="inventory" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
               Inventory
+            </TabsTrigger>
+            <TabsTrigger value="checkouts" className="flex items-center gap-2">
+              <ArrowUpRight className="w-4 h-4" />
+              Check-outs
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -173,6 +180,85 @@ export default function ResourcesPage() {
             )}
           </TabsContent>
 
+          <TabsContent value="checkouts">
+            {loadingAllocations ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : !allAllocations || allAllocations.length === 0 ? (
+              <div className="text-center py-16">
+                <ArrowUpRight className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No active check-outs</h3>
+                <p className="text-muted-foreground">Resources can be checked out from individual event pages</p>
+              </div>
+            ) : (
+              <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-muted/50 border-b border-border">
+                    <tr>
+                      <th className="p-4 font-semibold text-sm">Resource</th>
+                      <th className="p-4 font-semibold text-sm">Event</th>
+                      <th className="p-4 font-semibold text-sm">Quantity</th>
+                      <th className="p-4 font-semibold text-sm">Checked Out By</th>
+                      <th className="p-4 font-semibold text-sm">Date</th>
+                      <th className="p-4 font-semibold text-sm">Status</th>
+                      <th className="p-4 font-semibold text-sm text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {allAllocations.map((allocation) => (
+                      <tr key={allocation.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Package className="w-4 h-4 text-primary" />
+                            <span className="font-medium">{allocation.resource_type?.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm font-medium">{allocation.event_title}</td>
+                        <td className="p-4 text-sm">{allocation.quantity}</td>
+                        <td className="p-4 text-sm">{allocation.allocated_by_name}</td>
+                        <td className="p-4 text-sm text-muted-foreground">
+                          {new Date(allocation.allocated_at).toLocaleDateString()}
+                        </td>
+                        <td className="p-4">
+                          {allocation.returned ? (
+                            <Badge variant="outline" className="text-success border-success bg-success/5">
+                              Returned
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-warning border-warning bg-warning/5">
+                              Out
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          {!allocation.returned && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-primary hover:bg-primary/10"
+                              onClick={() => {
+                                setSelectedAllocation({
+                                  id: allocation.id,
+                                  eventId: allocation.event_id,
+                                  eventTitle: allocation.event_title
+                                });
+                                setReturnDialogOpen(true);
+                              }}
+                            >
+                              <RotateCcw className="w-4 h-4 mr-2" />
+                              Check-in
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="audit">
             <div className="bg-card rounded-2xl border border-border p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -183,6 +269,15 @@ export default function ResourcesPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {selectedAllocation && (
+          <ResourceReturnDialog
+            open={returnDialogOpen}
+            onOpenChange={setReturnDialogOpen}
+            eventId={selectedAllocation.eventId}
+            eventTitle={selectedAllocation.eventTitle}
+          />
+        )}
       </div>
     </MainLayout>
   );
