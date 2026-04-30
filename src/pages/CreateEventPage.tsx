@@ -27,6 +27,7 @@ import {
 import { useCreateEvent } from '@/hooks/useEvents';
 import { useCreateBulkResourceRequests } from '@/hooks/useResourceRequests';
 import { ResourceRequestSection, ResourceRequestItem } from '@/components/events/ResourceRequestSection';
+import { useToast } from '@/hooks/use-toast';
 
 type EventCategory = 'academic' | 'social' | 'sports' | 'cultural' | 'workshop' | 'seminar';
 
@@ -52,10 +53,22 @@ export default function CreateEventPage() {
     category: '' as EventCategory,
     capacity: '',
   });
+  const { toast } = useToast();
   const [resourceRequests, setResourceRequests] = useState<ResourceRequestItem[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate at least one resource request
+    const validRequests = resourceRequests.filter(r => r.resource_type_id && r.requested_quantity > 0);
+    if (validRequests.length === 0) {
+      toast({
+        title: 'Resource Request Required',
+        description: 'Please add at least one resource request before submitting.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     const event = await createEventMutation.mutateAsync({
       title: formData.title,
@@ -67,9 +80,8 @@ export default function CreateEventPage() {
       capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
     });
 
-    // Submit resource requests if any
-    const validRequests = resourceRequests.filter(r => r.resource_type_id && r.requested_quantity > 0);
-    if (validRequests.length > 0 && event?.id) {
+    // Submit resource requests
+    if (event?.id) {
       await createResourceRequestsMutation.mutateAsync({
         event_id: event.id,
         requests: validRequests,
@@ -84,6 +96,7 @@ export default function CreateEventPage() {
   };
 
   const isSubmitting = createEventMutation.isPending || createResourceRequestsMutation.isPending;
+  const hasValidRequests = resourceRequests.filter(r => r.resource_type_id && r.requested_quantity > 0).length > 0;
 
   return (
     <MainLayout>
@@ -258,7 +271,8 @@ export default function CreateEventPage() {
             <Button 
               type="submit" 
               className="gradient-primary text-white min-w-32"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !hasValidRequests}
+              title={!hasValidRequests ? 'Add at least one resource request to continue' : ''}
             >
               {isSubmitting ? (
                 <>

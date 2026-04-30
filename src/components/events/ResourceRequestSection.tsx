@@ -49,7 +49,7 @@ export function ResourceRequestSection({ requests, onChange }: ResourceRequestSe
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-2 text-base font-semibold">
           <Package className="w-5 h-5 text-primary" />
-          Resource Requests (Optional)
+          Resource Requests <span className="text-destructive ml-1">*</span>
         </Label>
         <Button type="button" variant="outline" size="sm" onClick={addRequest}>
           <Plus className="w-4 h-4 mr-1" />
@@ -58,8 +58,9 @@ export function ResourceRequestSection({ requests, onChange }: ResourceRequestSe
       </div>
 
       {requests.length === 0 ? (
-        <div className="text-muted-foreground text-sm py-4 text-center border border-dashed rounded-lg">
-          No resources requested. Click "Add Resource" to request items like projectors, chairs, etc.
+        <div className="text-muted-foreground text-sm py-4 text-center border-2 border-dashed border-destructive/30 rounded-lg bg-destructive/5">
+          <p className="font-medium text-destructive">At least one resource is required.</p>
+          <p className="text-xs mt-1">Click "Add Resource" to request items like projectors, chairs, etc.</p>
         </div>
       ) : (
         <div className="space-y-3">
