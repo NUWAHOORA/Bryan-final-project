@@ -12,16 +12,16 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 const roles = [
-  { 
-    value: 'student' as UserRole, 
-    label: 'Student', 
+  {
+    value: 'student' as UserRole,
+    label: 'Student',
     icon: BookOpen,
     description: 'Browse and register for events',
     color: 'border-blue-500 bg-blue-500/10 text-blue-600'
   },
-  { 
-    value: 'organizer' as UserRole, 
-    label: 'Organizer', 
+  {
+    value: 'organizer' as UserRole,
+    label: 'Organizer',
     icon: Users,
     description: 'Create and manage events',
     color: 'border-green-500 bg-green-500/10 text-green-600'
@@ -127,171 +127,171 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-6">
           <img src={appLogo} alt="NB Technologies Logo" className="w-32 h-32 object-contain mb-4" />
           <h2 className="text-2xl font-bold text-center">
-            {isForgotPassword 
-              ? 'Reset Password' 
+            {isForgotPassword
+              ? 'Reset Password'
               : isLogin ? 'SMART UNIVERSITY EVENT MANAGEMENT SYSTEM' : 'Create account'}
           </h2>
           <p className="text-muted-foreground text-sm text-center">
             {isForgotPassword
               ? 'Enter your email to receive a password reset link'
-              : isLogin 
+              : isLogin
                 ? 'Sign in to your account to continue'
                 : 'Sign up to get started with UCU Events'}
           </p>
         </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && !isForgotPassword && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-10 h-12"
-                      required={!isLogin && !isForgotPassword}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Select Your Role</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {roles.map((role) => {
-                      const Icon = role.icon;
-                      const isSelected = selectedRole === role.value;
-                      return (
-                        <button
-                          key={role.value}
-                          type="button"
-                          onClick={() => setSelectedRole(role.value)}
-                          className={cn(
-                            "flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200",
-                            isSelected 
-                              ? role.color + " border-current" 
-                              : "border-border hover:border-muted-foreground/50 bg-card"
-                          )}
-                        >
-                          <Icon className={cn(
-                            "w-6 h-6 mb-1",
-                            isSelected ? "" : "text-muted-foreground"
-                          )} />
-                          <span className={cn(
-                            "text-sm font-medium",
-                            isSelected ? "" : "text-muted-foreground"
-                          )}>
-                            {role.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center mt-1">
-                    {roles.find(r => r.value === selectedRole)?.description}
-                  </p>
-                </div>
-              </>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@university.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12"
-                  required
-                />
-              </div>
-            </div>
-
-            {!isForgotPassword && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && !isForgotPassword && (
+            <>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  {isLogin && (
-                    <button
-                      type="button"
-                      onClick={() => setIsForgotPassword(true)}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  )}
-                </div>
+                <Label htmlFor="name">Full Name</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12"
-                    required={!isForgotPassword}
-                    minLength={6}
+                    id="name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-10 h-12"
+                    required={!isLogin && !isForgotPassword}
                   />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select Your Role</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  {roles.map((role) => {
+                    const Icon = role.icon;
+                    const isSelected = selectedRole === role.value;
+                    return (
+                      <button
+                        key={role.value}
+                        type="button"
+                        onClick={() => setSelectedRole(role.value)}
+                        className={cn(
+                          "flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200",
+                          isSelected
+                            ? role.color + " border-current"
+                            : "border-border hover:border-muted-foreground/50 bg-card"
+                        )}
+                      >
+                        <Icon className={cn(
+                          "w-6 h-6 mb-1",
+                          isSelected ? "" : "text-muted-foreground"
+                        )} />
+                        <span className={cn(
+                          "text-sm font-medium",
+                          isSelected ? "" : "text-muted-foreground"
+                        )}>
+                          {role.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground text-center mt-1">
+                  {roles.find(r => r.value === selectedRole)?.description}
+                </p>
+              </div>
+            </>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-10 h-12"
+                required
+              />
+            </div>
+          </div>
+
+          {!isForgotPassword && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                {isLogin && (
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-xs font-medium text-primary hover:underline"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    Forgot password?
                   </button>
-                </div>
+                )}
               </div>
-            )}
-
-            <Button 
-              type="submit" 
-              className="w-full h-12 gradient-primary text-white font-medium"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  {isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign in' : 'Create Account'}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            {isForgotPassword ? (
-              <button
-                type="button"
-                onClick={() => setIsForgotPassword(false)}
-                className="text-primary font-medium hover:underline"
-              >
-                Back to Sign In
-              </button>
-            ) : (
-              <>
-                {isLogin ? "Don't have an account?" : 'Already have an account?'}
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 h-12"
+                  required={!isForgotPassword}
+                  minLength={6}
+                />
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setIsForgotPassword(false);
-                  }}
-                  className="ml-2 text-primary font-medium hover:underline"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {isLogin ? 'Sign Up' : 'Sign In'}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
+              </div>
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full h-12 gradient-primary text-white font-medium"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                {isForgotPassword ? 'Send Reset Link' : isLogin ? 'Sign in' : 'Create Account'}
+                <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}
-          </p>
+          </Button>
+        </form>
+
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          {isForgotPassword ? (
+            <button
+              type="button"
+              onClick={() => setIsForgotPassword(false)}
+              className="text-primary font-medium hover:underline"
+            >
+              Back to Sign In
+            </button>
+          ) : (
+            <>
+              {isLogin ? "Don't have an account?" : 'Already have an account?'}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setIsForgotPassword(false);
+                }}
+                className="ml-2 text-primary font-medium hover:underline"
+              >
+                {isLogin ? 'Sign Up' : 'Sign In'}
+              </button>
+            </>
+          )}
+        </p>
       </motion.div>
     </div>
   );
