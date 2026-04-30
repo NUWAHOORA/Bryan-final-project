@@ -15,8 +15,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
-import { UserWithRole, useApproveUser } from '@/hooks/useUsers';
+import { UserWithRole, useApproveUser, useUpdateUserRole } from '@/hooks/useUsers';
 
 const roleIcons = {
   admin: Shield,
@@ -39,6 +45,16 @@ interface UsersTableProps {
 
 export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: UsersTableProps) {
   const { mutate: approveUser, isPending: isApproving } = useApproveUser();
+  const { mutate: updateRole, isPending: isUpdatingRole } = useUpdateUserRole();
+
+  const handleRoleChange = (user: UserWithRole, newRole: 'admin' | 'organizer' | 'student') => {
+    updateRole({ 
+      userId: user.user_id, 
+      email: user.email, 
+      name: user.name, 
+      role: newRole 
+    });
+  };
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
@@ -128,7 +144,36 @@ export function UsersTable({ users, currentUserId, isAdmin, onDeleteUser }: User
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit User</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <Shield className="w-4 h-4 mr-2" />
+                              Change Role
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem 
+                                  onClick={() => handleRoleChange(user, 'admin')}
+                                  disabled={user.role === 'admin' || isUpdatingRole}
+                                >
+                                  Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleRoleChange(user, 'organizer')}
+                                  disabled={user.role === 'organizer' || isUpdatingRole}
+                                >
+                                  Organizer
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleRoleChange(user, 'student')}
+                                  disabled={user.role === 'student' || isUpdatingRole}
+                                >
+                                  Student
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                          </DropdownMenuSub>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-destructive focus:text-destructive"
                             onClick={() => onDeleteUser(user)}

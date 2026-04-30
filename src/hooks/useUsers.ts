@@ -171,3 +171,50 @@ export function useApproveUser() {
     }
   });
 }
+
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, email, name, role }: { userId: string; email: string; name: string; role: 'admin' | 'organizer' | 'student' }) => {
+      // 1. Update role in user_roles
+      // We use a delete and insert to ensure only one role exists (as per schema UNIQUE constraint)
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) throw deleteError;
+
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userId, role });
+
+      if (insertError) throw insertError;
+
+      // 2. Trigger email notification
+      const { error: functionError } = await supabase.functions.invoke('send-email-notification', {
+        body: {
+          notification_type: 'role_assigned',
+          recipient_email: email,
+          recipient_user_id: userId,
+          recipient_name: name,
+          subject: 'Role Updated - Smart University Event Management System',
+          status: role, // The new role
+          additional_message: `Your role has been updated to ${role} by the administrator.`
+        }
+      });
+
+      if (functionError) {
+        console.error('Error sending role update email:', functionError);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User role updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update user role');
+    }
+  });
+}
