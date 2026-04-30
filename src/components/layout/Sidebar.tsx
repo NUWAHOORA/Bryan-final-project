@@ -161,7 +161,8 @@ export function Sidebar() {
           "flex items-center gap-3 p-3 rounded-xl bg-sidebar-accent",
           collapsed && "justify-center"
         )}>
-          <Avatar className="w-10 h-10 flex-shrink-0">
+          <Avatar className="w-10 h-10 flex-shrink-0 overflow-hidden">
+            <AvatarImage src={profile.avatar_url || ''} className="object-cover" />
             <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
               {initials}
             </AvatarFallback>

@@ -53,8 +53,8 @@ export function TopBar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src="" alt={displayName} />
+              <Avatar className="h-10 w-10 overflow-hidden">
+                <AvatarImage src={profile?.avatar_url || ''} alt={displayName} className="object-cover" />
                 <AvatarFallback className="bg-primary/10 text-primary">{initials}</AvatarFallback>
               </Avatar>
             </Button>

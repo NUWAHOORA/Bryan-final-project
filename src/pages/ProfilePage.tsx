@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: profile?.name || '',
@@ -62,6 +63,50 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    try {
+      // 1. Upload image to 'avatars' bucket
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // 2. Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // 3. Update profile with new avatar_url
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: 'Avatar updated',
+        description: 'Your profile picture has been updated.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Upload failed',
+        description: 'Ensure an "avatars" bucket exists in your Supabase Storage.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const displayName = profile?.name || profile?.email?.split('@')[0] || 'User';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
 
@@ -97,13 +142,26 @@ export default function ProfilePage() {
           >
             <div className="bg-card rounded-2xl border border-border p-8 flex flex-col items-center text-center">
               <div className="relative group mb-4">
-                <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-primary/10 text-primary text-4xl">{initials}</AvatarFallback>
+                <Avatar className="w-32 h-32 border-4 border-background shadow-xl overflow-hidden">
+                  <AvatarImage src={profile?.avatar_url || ''} className="object-cover" />
+                  <AvatarFallback className="bg-primary/10 text-primary text-4xl">
+                    {isUploading ? <Loader2 className="w-8 h-8 animate-spin" /> : initials}
+                  </AvatarFallback>
                 </Avatar>
-                <button className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-lg group-hover:scale-110 transition-transform">
+                <Label 
+                  htmlFor="avatar-upload" 
+                  className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform active:scale-95"
+                >
                   <Camera className="w-4 h-4" />
-                </button>
+                  <input 
+                    id="avatar-upload" 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleAvatarUpload}
+                    disabled={isUploading}
+                  />
+                </Label>
               </div>
               <h3 className="text-xl font-bold">{displayName}</h3>
               <p className="text-muted-foreground text-sm flex items-center justify-center gap-1 mt-1">
