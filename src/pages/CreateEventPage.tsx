@@ -64,7 +64,7 @@ export default function CreateEventPage() {
       time: formData.time,
       venue: formData.venue,
       category: formData.category,
-      capacity: parseInt(formData.capacity),
+      capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
     });
 
     // Submit resource requests if any
@@ -227,16 +227,16 @@ export default function CreateEventPage() {
                 <Label htmlFor="capacity" className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-primary" />
                   Capacity
+                  <span className="text-xs text-muted-foreground font-normal">(optional – leave blank for unlimited)</span>
                 </Label>
                 <Input
                   id="capacity"
                   type="number"
-                  placeholder="Max attendees"
+                  placeholder="Unlimited if empty"
                   value={formData.capacity}
                   onChange={(e) => handleChange('capacity', e.target.value)}
                   className="h-12"
                   min={1}
-                  required
                 />
               </div>
             </div>

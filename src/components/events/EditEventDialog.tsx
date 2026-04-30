@@ -42,7 +42,7 @@ interface EditEventDialogProps {
     time: string;
     venue: string;
     category: EventCategory;
-    capacity: number;
+    capacity: number | null;
   };
 }
 
@@ -67,7 +67,7 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
         time: event.time,
         venue: event.venue,
         category: event.category,
-        capacity: event.capacity.toString(),
+        capacity: event.capacity ? event.capacity.toString() : '',
       });
     }
   }, [event]);
@@ -83,7 +83,7 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
       time: formData.time,
       venue: formData.venue,
       category: formData.category,
-      capacity: parseInt(formData.capacity),
+      capacity: formData.capacity ? parseInt(formData.capacity) : null,
     });
 
     onOpenChange(false);
@@ -207,15 +207,16 @@ export function EditEventDialog({ open, onOpenChange, event }: EditEventDialogPr
               <Label htmlFor="edit-capacity" className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
                 Capacity
+                <span className="text-xs text-muted-foreground font-normal">(optional)</span>
               </Label>
               <Input
                 id="edit-capacity"
                 type="number"
+                placeholder="Unlimited if empty"
                 value={formData.capacity}
                 onChange={(e) => handleChange('capacity', e.target.value)}
                 className="h-11"
                 min={1}
-                required
               />
             </div>
           </div>

@@ -28,8 +28,9 @@ const statusColors: Record<string, string> = {
 };
 
 export function EventCard({ event, index = 0 }: EventCardProps) {
-  const spotsLeft = event.capacity - event.registeredCount;
-  const isAlmostFull = spotsLeft < event.capacity * 0.1;
+  const hasCapacity = event.capacity && event.capacity > 0;
+  const spotsLeft = hasCapacity ? event.capacity - event.registeredCount : Infinity;
+  const isAlmostFull = hasCapacity && spotsLeft < event.capacity * 0.1;
 
   return (
     <motion.div
@@ -90,7 +91,7 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
               "text-sm font-medium",
               isAlmostFull ? "text-warning" : "text-muted-foreground"
             )}>
-              {event.registeredCount}/{event.capacity} registered
+              {hasCapacity ? `${event.registeredCount}/${event.capacity}` : event.registeredCount} registered
             </span>
           </div>
           <Link to={`/events/${event.id}`}>
