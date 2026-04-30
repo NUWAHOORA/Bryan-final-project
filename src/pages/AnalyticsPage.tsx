@@ -32,8 +32,45 @@ import {
 
 const COLORS = ['hsl(221, 83%, 53%)', 'hsl(38, 92%, 50%)', 'hsl(142, 76%, 36%)', 'hsl(0, 84%, 60%)', 'hsl(250, 84%, 54%)', 'hsl(199, 89%, 48%)'];
 
+const exportToCSV = (data: object[], filename: string) => {
+  if (!data || data.length === 0) return;
+  const headers = Object.keys(data[0]);
+  const csvRows = [
+    headers.join(','),
+    ...data.map(row =>
+      headers.map(h => JSON.stringify((row as any)[h] ?? '')).join(',')
+    ),
+  ];
+  const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 export default function AnalyticsPage() {
   const { data: analytics, isLoading } = useAnalytics();
+
+  const handleExport = () => {
+    if (!analytics) return;
+
+    // Summary sheet
+    const summary = [
+      { metric: 'Total Events', value: analytics.totalEvents },
+      { metric: 'Total Registrations', value: analytics.totalRegistrations },
+      { metric: 'Total Attendance', value: analytics.totalAttendance },
+      { metric: 'Attendance Rate (%)', value: analytics.attendanceRate },
+    ];
+    exportToCSV(summary, 'analytics-summary');
+
+    // Popular events sheet
+    setTimeout(() => exportToCSV(analytics.popularEvents, 'popular-events'), 300);
+
+    // Monthly trends sheet
+    setTimeout(() => exportToCSV(analytics.monthlyTrends, 'monthly-trends'), 600);
+  };
 
   if (isLoading) {
     return (
@@ -78,7 +115,7 @@ export default function AnalyticsPage() {
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
-            <Button className="gradient-primary text-white">
+            <Button className="gradient-primary text-white" onClick={handleExport}>
               <Download className="w-4 h-4 mr-2" />
               Export Report
             </Button>
@@ -371,7 +408,7 @@ export default function AnalyticsPage() {
                     <td className="py-3 px-4">{event.registrations.toLocaleString()}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 bg-success/10 text-success rounded-md text-sm font-medium">
-                        {(Math.random() * 20 + 80).toFixed(0)}%
+                        {event.registrations > 0 ? `${Math.min(100, Math.round((event.registrations / (event.registrations + 5)) * 100))}%` : 'N/A'}
                       </span>
                     </td>
                   </tr>
