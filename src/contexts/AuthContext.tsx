@@ -67,12 +67,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          window.location.href = '/update-password';
-        }
-        
+        // Always set session state first so it's available on the next page
         setSession(session);
         setUser(session?.user ?? null);
+
+        if (event === 'PASSWORD_RECOVERY') {
+          // Use React Router navigation (via window history) to preserve the session
+          // without triggering a full page reload that would clear the token
+          window.history.replaceState(null, '', '/update-password');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
 
         if (session?.user) {
           // Defer Supabase calls with setTimeout
