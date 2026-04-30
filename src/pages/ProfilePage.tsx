@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function ProfilePage() {
-  const { profile, role, user } = useAuth();
+  const { profile, role, user, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +46,7 @@ export default function ProfilePage() {
         .eq('user_id', user.id);
 
       if (error) throw error;
+      await refreshProfile();
       
       toast({
         title: 'Profile updated',
@@ -91,6 +92,7 @@ export default function ProfilePage() {
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
+      await refreshProfile();
 
       toast({
         title: 'Avatar updated',

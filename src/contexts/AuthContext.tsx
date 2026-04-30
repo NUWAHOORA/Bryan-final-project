@@ -10,6 +10,7 @@ interface Profile {
   email: string;
   name: string;
   department?: string;
+  phone?: string;
   avatar_url?: string;
   is_approved: boolean;
 }
@@ -21,6 +22,7 @@ interface AuthContextType {
   role: UserRole | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  refreshProfile: () => Promise<void>;
   signUp: (email: string, password: string, name: string, role?: UserRole) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -156,6 +158,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(null);
   };
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchUserData(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -164,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       isAuthenticated: !!session,
       isLoading,
+      refreshProfile,
       signUp,
       signIn,
       resetPassword,
