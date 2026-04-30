@@ -97,9 +97,10 @@ export default function ProfilePage() {
         description: 'Your profile picture has been updated.',
       });
     } catch (error: any) {
+      console.error('Upload error:', error);
       toast({
         title: 'Upload failed',
-        description: 'Ensure an "avatars" bucket exists in your Supabase Storage.',
+        description: error.message || 'Ensure an "avatars" bucket exists in your Supabase Storage.',
         variant: 'destructive',
       });
     } finally {
