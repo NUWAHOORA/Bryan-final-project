@@ -45,7 +45,7 @@ export function useUsers() {
         avatar_url: profile.avatar_url,
         created_at: profile.created_at,
         role: (rolesMap.get(profile.user_id) as 'admin' | 'organizer' | 'student') || 'student',
-        is_approved: profile.is_approved
+        is_approved: !!profile.is_approved
       }));
     }
   });
