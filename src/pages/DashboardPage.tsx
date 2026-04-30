@@ -262,6 +262,10 @@ export default function DashboardPage() {
                 />
               ))}
             </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No upcoming events yet
+            </div>
           )}
         </motion.div>
 
