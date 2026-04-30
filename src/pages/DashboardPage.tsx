@@ -16,26 +16,20 @@ import { EventCard } from '@/components/events/EventCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents, useUpdateEventStatus } from '@/hooks/useEvents';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 export default function DashboardPage() {
   const { profile, role } = useAuth();
-  const { data: events, isLoading } = useEvents();
+  const { data: events, isLoading: loadingEvents } = useEvents();
+  const { data: analytics, isLoading: loadingAnalytics } = useAnalytics();
   const updateStatusMutation = useUpdateEventStatus();
   
   const approvedEvents = events?.filter(e => e.status === 'approved') || [];
   const pendingEvents = events?.filter(e => e.status === 'pending') || [];
   const upcomingEvents = approvedEvents.slice(0, 3);
 
-  // Calculate analytics from real data
-  const totalEvents = events?.length || 0;
-  const totalRegistrations = events?.reduce((sum, e) => sum + e.registered_count, 0) || 0;
-  const totalAttendance = events?.reduce((sum, e) => sum + e.attended_count, 0) || 0;
-  const attendanceRate = totalRegistrations > 0 ? ((totalAttendance / totalRegistrations) * 100).toFixed(1) : '0';
-
-  const monthlyTrends = [
-    { month: 'Jan', events: totalEvents, registrations: totalRegistrations },
-  ];
+  const isLoading = loadingEvents || loadingAnalytics;
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -87,21 +81,21 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Events"
-            value={totalEvents}
+            value={analytics?.totalEvents || 0}
             icon={Calendar}
             variant="primary"
             delay={0}
           />
           <StatCard
             title="Total Registrations"
-            value={totalRegistrations.toLocaleString()}
+            value={(analytics?.totalRegistrations || 0).toLocaleString()}
             icon={Users}
             variant="success"
             delay={0.1}
           />
           <StatCard
             title="Attendance Rate"
-            value={`${attendanceRate}%`}
+            value={`${analytics?.attendanceRate || 0}%`}
             icon={TrendingUp}
             variant="accent"
             delay={0.2}
@@ -125,7 +119,7 @@ export default function DashboardPage() {
           >
             <h3 className="text-lg font-semibold mb-4">Monthly Registrations</h3>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={monthlyTrends}>
+              <BarChart data={analytics?.monthlyTrends || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -149,7 +143,7 @@ export default function DashboardPage() {
           >
             <h3 className="text-lg font-semibold mb-4">Events Overview</h3>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={monthlyTrends}>
+              <LineChart data={analytics?.monthlyTrends || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -268,11 +262,38 @@ export default function DashboardPage() {
                 />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No upcoming events yet
-            </div>
           )}
+        </motion.div>
+
+        {/* Recent Activity Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8 bg-card rounded-2xl border border-border p-6"
+        >
+          <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            System-wide Activity
+          </h2>
+          <div className="space-y-4">
+            {analytics?.popularEvents.slice(0, 3).map((event, i) => (
+              <div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">New registrations for <span className="text-primary">{event.name}</span></p>
+                    <p className="text-xs text-muted-foreground">Recent peak in participation</p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold bg-success/10 text-success px-2 py-1 rounded-full">
+                  +{event.registrations} total
+                </span>
+              </div>
+            ))}
+          </div>
         </motion.div>
       </div>
     </MainLayout>

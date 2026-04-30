@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { TopBar } from './TopBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
@@ -15,11 +16,14 @@ export function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
-      <main className="ml-[280px] min-h-screen transition-all duration-300">
-        {children}
-      </main>
+      <div className="flex-1 flex flex-col ml-[280px] min-h-screen transition-all duration-300">
+        <TopBar />
+        <main className="flex-1 bg-muted/20">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

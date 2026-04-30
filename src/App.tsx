@@ -22,6 +22,7 @@ import ResourcesPage from "./pages/ResourcesPage";
 import MeetingsPage from "./pages/MeetingsPage";
 import EmailSettingsPage from "./pages/EmailSettingsPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
+import ProfilePage from "./pages/ProfilePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/meetings" element={<MeetingsPage />} />
             <Route path="/email-settings" element={<EmailSettingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
